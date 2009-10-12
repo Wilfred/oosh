@@ -17,11 +17,20 @@
 */
 
 import java.io.Console;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 
 class Oosh {
     public static void main(String[] args) {
 	Console console = System.console();
 	console.printf("Welcome to oosh\n");
+
+	Signal.handle(new Signal("INT"), new SignalHandler() {
+		// Signal handler method
+		public void handle(Signal signal) {
+		    //do nothing, user should use exit
+		}
+	    });
 
 	while(true) {
 	    String currentLine = console.readLine("$ ");
