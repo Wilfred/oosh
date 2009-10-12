@@ -1,0 +1,26 @@
+import java.io.PrintWriter;
+import java.util.Scanner;
+import java.io.Console;
+
+class Oosh {
+    public static void main(String[] args) {
+	Console console = System.console();
+	//read user name, using java.util.Formatter syntax :
+	String username = console.readLine("User Name? ");
+
+	// Console console = System.console();
+
+	// PrintWriter out = console.writer();
+	// out.printf("Welcome to oosh\n");
+
+	// while(true) {
+	//     //work with the user input
+	//     execute(console.readLine("$ "));
+	// }
+    }
+
+    private static void execute(String command) {
+	//todo: need to register commands properly
+	//	out.printf(command);
+    }
+}
