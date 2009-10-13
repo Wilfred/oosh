@@ -1,0 +1,303 @@
+% Copyright Wilfred Hughes, CC-BY-SA license
+\documentclass[12pt]{article}
+\usepackage{a4wide} % increase page width
+
+% todo: delete this commands
+\newcommand{\al}{$<$}
+\newcommand{\ar}{$>$}
+
+\parindent 0pt
+\parskip 6pt
+
+\begin{document}
+
+\thispagestyle{empty}
+
+\rightline{\large Wilfred Hughes}
+\medskip
+\rightline{\large Churchill}
+\medskip
+\rightline{\large wrah2}
+
+\vfil
+
+\centerline{\large Part II Computer Science Project Proposal}
+\vspace{0.4in}
+\centerline{\Large\bf oosh: An objected oriented shell}
+\vspace{0.3in}
+\centerline{\large \today}
+
+\vfil
+
+{\bf Project Originator:} Dave Eyers
+
+\vspace{0.1in}
+
+{\bf Resources Required:} See attached Project Resource Form
+
+\vspace{0.5in}
+
+{\bf Project Supervisor:} Dave Eyers
+
+\vspace{0.2in}
+
+{\bf Signature:}
+
+\vspace{0.5in}
+
+{\bf Director of Studies:}  John Fawcett
+
+\vspace{0.2in}
+
+{\bf Signature:}
+
+\vspace{0.5in}
+
+{\bf Overseers:} Jon Crowcroft and Pietro Lio
+
+\vspace{0.2in}
+
+{\bf Signatures:}
+
+\vfil
+\eject
+
+\section*{Introduction and Description of the Work}
+% needs refactoring
+Unix shells offer powerful ways of working with data and files using a
+command line interface. Traditionally they have been written in C,
+only passing text streams between programs.
+
+I intend to extend this idea to an `object stream' where the data
+passed between programs contains semantic structure and metadata. 
+
+Due to the age of the Unix shell design (with many design decisions
+visible in the original Unix shell circa 1979 [reference]) the concept
+of multiple capable terminals connected to the network was not
+considered. A user either ran his shell locally or dialed in to
+another system and ran it there. Whilst applications (such as telnet
+and ssh) have long supported file transfer they are not part of the
+Unix shell abstraction.
+
+My design will modify the basic shell design such that programs are
+presented with files stored both locally and remotely, transparent to
+the program performing the computation. This will make Unix commands
+such as \texttt{scp} redundant as \texttt{cp} could be used in its
+place.
+
+\section*{Resources Required}
+I plan to perform most of my work using my personal computer. The code
+will be stored in a remote git repository so I need an Internet
+connection to push my changes there regularly. If necessary I can move
+to any Internet connected system that offers a Java compiler.
+
+\section*{Starting Point}
+My personal computer has run Linux for some time so I have some
+expertise with Unix systems and shells. I also attended the Unix tools
+lectures given by Dr Marcus Kuhn during part IB.
+
+\section*{Substance and Structure of the Project}
+The project will be written in Java due to it supporting
+object-oriented programming and a safe type-system. It is also a
+language I am already familiar with.
+
+The shell itself will offer a full interpreter for shells scripts,
+using a syntax similar to bash shells ([fish reference]). Posix
+compliance is not necessary for this project, and other research
+projects in this area have not aimed for this ([fish, previous
+cambridge projects, powershell]). Java supports regular expressions so
+writing a lexer will not require any specialist tools. There are also
+a number of compiler-compiler tools available however a simple
+recursive-descent parser should be sufficient to evaluate and run
+oosh shell scripts.
+
+I will also require a selection of programs that best demonstrate the
+power of passing object streams and the advantages of network
+transparency. I will implement a subset of the functionality offered
+by BusyBox ([reference]), which offers a minimal shell for embedded
+devices. I will also write a few small programs which manipulate
+object streams to demonstrate their advantages over unstructured text streams.
+
+\section*{Success Criteria}
+The final outcome of the project should provide:
+
+\begin{enumerate}
+\item A oosh shell syntax interpreter
+\item Some example oosh shell scripts
+\item Location independent file access to programs run within oosh
+\item Some programs which exploit this functionality
+\item Some programs which exploit the fact that the object stream
+  contains semantic information
+\item A collection of benchmarks which show the speed difference
+  between oosh and other shells
+\item The dissertation must be planned and written.
+\end{enumerate}
+
+\section*{Timetable and Milestones}
+
+
+\subsection*{Weeks 1 to 5}
+
+\al\emph{Real work on the project starts here (as distinct from just
+  work on the proposal).  A significant problem for Diploma candidates
+  is that this critical period largely coincides with the Christmas
+  vacation.  There is no guarantee that supervisors will be available
+  outside Lecture Term, but Diploma students take much less of a
+  Christmas break than undergraduates do, and so have some opportunity
+  for uninterrupted reading and initial practical work at this stage.
+  It is important to have completed some serious work on the project
+  before the pressures of the Lent Term become all too apparent.}\ar
+
+Study C and the particular implementation of it to be used.  Practise
+writing various small programs, including key fragments of the compiler
+and interpreter.
+
+Milestones: Some working example C programs including code to deal
+with symbol tables in the lexical analyser, and part implementation of
+the time queue to be used in the interpreter/simulator.
+
+
+\subsection*{Weeks 6 and 7}
+
+Further literature study and discussion with Supervisor to ensure that
+the chosen data structures are satisfactory.  Implementation of the
+syntax analyser and debugging code to help test it.  This is likely to
+be code that can be used to display the data structures in
+human-readable form so that it is possible to check that they are as
+expected.
+
+Milestones: Ability to construct and display data structures that
+represent simple ladder logic programs such as:
+
+\begin{verbatim}
+    |    A               B                C     |
+    +---| |-------------| |--------------( )----+
+\end{verbatim}
+
+
+\subsection*{Weeks 8 to 10}
+
+Implementation of the translation phase of the compiler. This will of
+a decision to be made on what target code to generate. The obvious contnders
+are: an interpretive code, Java or C.
+
+Start to plan the Dissertation, thinking ahead especially to the
+collection of examples and tests that will be used to demonstrate that
+the project has been a success. 
+
+Milestones: Ability to compile some very simple ladder logic programs,
+and print out some human readable version of the target code produced.
+
+
+\subsection*{Weeks 11 and 12}
+
+Complete code for the interpreter/simulator, or the environment in
+which to run the generated Java or C target code.
+
+Prepare further test cases.  Review timetable for the remainder of the
+project and adjust in the light of experience thus far.  Write the
+Progress Report drawing attention to the code already written,
+incorporating some examples, and recording any augmentations which at
+this stage seem reasonably likely to be incorporated.
+
+Milestones: Simple ladder logic programs should now compile and run
+correctly, but probably with some serious inefficiencies in the code.
+Progress Report submitted and entire project reviewed both personally
+and with Overseers.
+
+
+\subsection*{Weeks 13 to 19 (including Easter vacation)}
+
+Rework the entire implementation to enhance the
+richness of the language it can deal with. \al\emph{It is possible that
+the initial implementation has severe restrictions on the number of
+relays or coils that can be handled. Such restrictions can be freed at
+this stage.}\ar\  Write initial chapters of the Dissertation.
+
+\al\emph{The Easter break from lectures can provide a time to work on a
+substantial challenge such as the computation of logarithms, where an
+uninterrupted week can allow you to get to grips with a fairly
+complicated algorithm.  This is a good time to put in some quiet work
+(while your Supervisor is busy on other things) writing the
+Preparation and Implementation chapters of the Dissertation.  By this
+stage the form of the final implementation should be sufficiently
+clear that most of that chapter can be written, even if the code is
+incomplete.  Describing clearly what the code will do can often be a
+way of sharpening your own understanding of how to implement it.}\ar
+
+Milestones: Preparation chapter of Dissertation complete,
+Implementation chapter at least half complete, code can perform a
+variety of interesting tasks and should be in a state that in the
+worst case it would satisfy the examiners with at most cosmetic
+adjustment.
+
+
+\subsection*{Weeks 20 to 26}
+
+\al\emph{Since your project is, by now, in fairly good shape there is
+a chance to use the immediate run-up to exams to attend to small
+rationalisations and to implement things that are useful but fairly
+straightforward.  It is generally not a good idea to drop all project
+work over the revision season; if you do, the code will feel amazingly
+unfamiliar when you return to it.  Equally, first priority has to go
+to the exams, so do not schedule anything too demanding on the project
+front here.  The fact that the Implementation chapter of the
+Dissertation is in draft will mean that you should have a very clear
+view of the work that remains, and so can schedule it rationally.}\ar
+
+Work on the project will be kept ticking over during this period but
+undoubtedly the Easter Term lectures and examination revision will
+take priority.
+
+
+\subsection*{Weeks 27 to 31}
+
+\al\emph{Getting back to work after the examinations and May Week
+  calls for discipline.  Setting a timetable can help stiffen your
+  resolve!}\ar
+
+Testing and evaluation.  Finish off otherwise ragged parts of the
+code.  Write the Introduction chapter and draft the Evaluation and
+Conclusions chapters of the Dissertation, complete the Implementation
+chapter.
+
+Milestones: Examples and test cases run and results collected,
+Dissertation essentially complete, with large sections of it
+proof-read by Supervisor and possibly friends and/or Director of
+Studies.
+
+
+\subsection*{Weeks 32 to 33}
+
+Finish Dissertation, preparing diagrams for insertion.  Review whole
+project, check the Dissertation, and spend a final few days on
+whatever is in greatest need of attention.
+
+\al\emph{In many cases, once a Dissertation is complete (but not
+  before) it will become clear where the biggest weakness in the
+  entire work is.  In some cases this will be that some feature of the
+  code has not been completed or debugged, in other cases it will be
+  that more sample output is needed to show the project's capabilities
+  on larger test cases.  In yet other cases it will be that the
+  Dissertation is not as neatly laid out or well written as would be
+  ideal.  There is much to be said for reserving a small amount of
+  time right at the end of the project (when your skills are most
+  developed) to put in a short but intense burst of work to try to
+  improve matters.  Doing this when the Dissertation is already
+  complete is good: you have a clearly limited amount of time to work,
+  and if your efforts fail you still have something to hand in!  If
+  you succeed you may be able to replace that paragraph where you
+  apologise for not getting feature X working into a brief note
+  observing that you can indeed do X as well as all the other things
+  you have talked about.}\ar
+
+
+\subsection*{Week 34}
+
+\al\emph{Aim to submit the dissertation at least a week before the
+  deadline. Be ready to check whether you will be needed for a\/ {\rm
+    viva voce} examination}.\ar
+
+Milestone: Submission of Dissertation. 
+
+\end{document}
