@@ -1,0 +1,29 @@
+Subject: Phase 1 - Hughes: oosh: An object oriented Unix shell
+
+Phase 1 Project Selection Status Report
+
+Name: Wilfred Hughes
+
+College: Churchill
+
+User Identifier: wrah2                                               
+
+Director of Studies: John Fawcett                                           
+
+Please complete 1, 2 and 3 below.
+
+1. Please write 100 words on your current project ideas.
+I intend to write a Unix shell in Java using an object oriented approach. Rather than passing text streams between processes (using pipes) programs will pass objects with semantic information within them. This will enable easier filtering, sorting and graphing. Programs will be aware of the data types being passed between them and act appropriately. Further, I intend to implement network transparency, which will harmonise commands such as cp and scp.
+
+2. Please list names of potential project supervisors.
+Dave Eyers                                                                 
+
+3. Is there any chance that your project will involve any
+computing resources other than the Computing Service's PWF and
+software that is already installed there, for example: your own
+machine, machines in College, special peripherals, imported
+software packages, special hardware, network access, substantial
+extra disc space on the PWF.
+
+If so indicate below what, and what it is needed for.
+I will use my own machine for development, but store the code remotely. This will also require Internet access.
