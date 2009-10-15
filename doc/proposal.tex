@@ -59,7 +59,6 @@
 \eject
 
 \section*{Introduction and Description of the Work}
-% needs refactoring
 Unix shells offer powerful ways of working with data and files using a
 command line interface. Traditionally they have been written in C,
 only passing text streams between programs.
@@ -68,12 +67,12 @@ I intend to extend this idea to an `object stream' where the data
 passed between programs contains semantic structure and metadata. 
 
 Due to the age of the Unix shell design (with many design decisions
-visible in the original Unix shell circa 1979 [reference]) the concept
-of multiple capable terminals connected to the network was not
-considered. A user either ran his shell locally or dialled in to
-another system and ran it there. Whilst applications (such as telnet
-and ssh) have long supported file transfer they are not part of the
-Unix shell abstraction.
+unchanged from the original Unix shell circa 1971 \cite{firstshell})
+the concept of multiple capable terminals connected to the network was
+not considered. A user either ran his shell locally or dialled in to
+another system and ran it there. Whilst applications (such as
+\texttt{telnet} and \texttt{ssh}) have long supported file transfer
+they are not part of the Unix shell abstraction.
 
 My design will modify the basic shell design such that programs are
 presented with files stored both locally and remotely, transparent to
@@ -100,31 +99,34 @@ object-oriented programming and a safe type-system. It is also a
 language I am already familiar with.
 
 The shell itself will offer a full interpreter for shells scripts,
-using a syntax similar to bash shells ([bash syntax reference]). POSIX
-compliance is not necessary for this project, and other research
-projects in this area have not aimed for this ([fish, previous
-Cambridge projects, powershell]). Java supports regular expressions so
-writing a lexer will not require any specialist tools. There are also
-a number of compiler-compiler tools available for Java programs
-however a simple recursive-descent parser should be sufficient to
-evaluate and run oosh shell scripts.
+using a syntax similar to that found in bash \cite{bash}. POSIX
+compliance \cite{posix} is not necessary for this project, and other
+research projects in this area have not aimed for compliance to improve
+readability \cite{fish} or power \cite{powershell}.
+
+Java supports regular expressions so writing a lexer will not require
+any specialist tools. There are also a number of compiler-compiler
+tools available for Java programs which I can exploit to produce a
+capable interpreter.
 
 I will also require a selection of programs that best demonstrate the
 power of passing object streams and the advantages of network
-transparency. I will implement a subset of the functionality offered
-by BusyBox ([reference]), which offers a minimal shell for embedded
-devices. I will also write a few small programs which manipulate
-object streams to demonstrate their advantages over unstructured text
-streams.
+transparency. With the additional metadata available to the system I
+will implement set of object stream manipulation tools, based on the
+relational algebra. Additionally I will implement a subset of the
+functionality offered by BusyBox \cite{busybox}, which offers a
+minimal shell for embedded devices. This will focus on file
+manipulation to demonstrate the network transparency, and commands
+that provide interesting data (such as \texttt{who}, \texttt{ls} and
+\texttt{traceroute}).
 
 \section*{Success Criteria}
 The final outcome of the project should provide:
 
 \begin{enumerate}
-\item A oosh shell syntax interpreter
-\item Some example oosh shell scripts
-\item Location independent file access to programs run within oosh
-\item Some programs which exploit this functionality
+\item A oosh shell syntax interpreter with some example scripts
+\item Network transparent file access to programs run within oosh with
+  some programs which exploit this
 \item Some programs which exploit the fact that the object stream
   contains semantic information
 \item A collection of benchmarks which show the speed difference
@@ -138,7 +140,7 @@ The final outcome of the project should provide:
 Write the project proposal. Set up code repository on public facing
 server. Write skeleton code and test code repository. Design and
 implement object stream structure. Set up a test harness to facilitate
-unit testing.
+unit testing. Research Java console libraries.
 
 Milestones: Proposal written and submitted. Some basic code available
 in git repository.
@@ -172,8 +174,8 @@ written and working.
 \subsection*{Weeks 9 and 10}
 Slack time. Extend test coverage. Add UI polish.
 
-Milestones: Higher test coverage. Shell tab completion. Oosh is now
-feature complete.
+Milestones: Higher test coverage. Shell tab completion. Oosh reaches
+feature completion.
 
 {\bf Beginning of Lent term}.
 
@@ -198,5 +200,43 @@ Milestones: Paper copy of final dissertation draft.
 {\bf End of Lent term}.
 
 {\bf Dissertation and source code due on the 14 May 210}.
+
+\begin{thebibliography}{9} % at most 9 citations
+
+\bibitem{firstshell}
+  Dennis M. Ritchie,
+  \emph{The Evolution of the Unix Time-sharing System}.
+  http://cm.bell-labs.com/cm/cs/who/dmr/hist.html fetched 15th October
+  2009.
+
+\bibitem{bash}
+  The GNU Project,
+  \emph{Bash Reference Manual}.
+  http://www.gnu.org/software/bash/manual/bashref.html fetched 15th
+  October 2009.
+ 
+\bibitem{posix}
+  The Open Group,
+  \emph{POSIX:2008 (IEEE Std 1003.1-2008) Shell and Utilities}.
+  http://www.opengroup.org/onlinepubs/9699919799/ fetched 15th October
+  2009.
+
+\bibitem{fish}
+  Axel Liljencrantz,
+  \emph{Fish user documentation}.
+  http://fishshell.org/user\_doc/index.html fetched 15th October 2009.
+
+\bibitem{powershell}
+  Microsoft Developer Network,
+  \emph{Windows Powershell Quickstart}.
+  http://channel9.msdn.com/wiki/windowspowershellquickstart/ fetched
+  15th October 2009.
+
+\bibitem{busybox}
+  Erik Andersen, Rob Landley and Denys Vlasenko,
+  \emph{BusyBox - The Swiss Army Knife of Embedded Linux}.
+  http://www.busybox.net/ fetched 15th October 2009.
+
+\end{thebibliography}
 
 \end{document}
