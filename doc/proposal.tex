@@ -60,8 +60,8 @@
 
 \section*{Introduction and Description of the Work}
 Unix shells offer powerful ways of working with data and files using a
-command line interface. Traditionally they have been written in C,
-only passing text streams between programs.
+command line interface. Traditionally they were only a simplified interface
+to the kernel, passing unstructured text streams between programs.
 
 I intend to extend this idea to an `object stream' where the data
 passed between programs contains semantic structure and metadata. This
@@ -106,15 +106,17 @@ using a syntax similar to that found in bash \cite{bash}. POSIX
 compliance \cite{posix} is not necessary for this project, and other
 research projects in this area have not aimed for compliance to improve
 readability \cite{fish} or power \cite{powershell}. I will therefore
-extend the bash syntax to make shell scripts more expressive. I will
-generalise the idea of utilities such as \texttt{grep} to the full
-complement of the relational algebra. With the addition of metadata to
-what was previously unstructured text data I can develop applications
-that are content-aware; capable of modifying their behaviour based on
-data format. Semantic information available also enables the
-development of tools that understand the data that flows through
-them. This will enable the creation of tools that visualise the data
-in a natural way.
+extend the bash syntax to make shell scripts more expressive. 
+
+I will generalise the idea of utilities such as \texttt{grep} to the
+full complement of the relational algebra (since a number of common
+program output data in a tabular structure). With the addition of
+metadata to what was previously unstructured text data I can develop
+applications that are content-aware; capable of modifying their
+behaviour based on data format. Semantic information available also
+enables the development of tools that understand the data that flows
+through them. This will enable the creation of tools that visualise
+the data in a natural way.
 
 To demonstrate the additional power due to manipulating structured
 data, I will also develop a selection of tools that provide
