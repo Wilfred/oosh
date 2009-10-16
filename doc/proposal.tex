@@ -95,30 +95,35 @@ Emacs over the summer vacation.
 
 \section*{Substance and Structure of the Project}
 The project will be written in Java due to it supporting
-object-oriented programming and a safe type-system. It is also a
-language I am already familiar with.
+object-oriented programming and a safe type-system. I intend to fully
+exploit the wider Java ecosystem, using the tools available to perform
+tasks such as parser building and test framework development.
 
-The shell itself will offer a full interpreter for shells scripts,
+The shell itself will offer a full interpreter for shell scripts,
 using a syntax similar to that found in bash \cite{bash}. POSIX
 compliance \cite{posix} is not necessary for this project, and other
 research projects in this area have not aimed for compliance to improve
-readability \cite{fish} or power \cite{powershell}.
+readability \cite{fish} or power \cite{powershell}. I will therefore
+extend the bash syntax to make shell scripts more expressive. I will
+generalise the idea of utilities such as \texttt{grep} to the full
+complement of the relational algebra. With the addition of metadata to
+what was previously unstructured text data I can develop applications
+that are content-aware; capable of modifying their behaviour based on
+data format. Semantic information available also enables the
+development of tools that understand the data that flows through
+them. This will enable the creation of tools that visualise the data
+in a natural way.
 
-Java supports regular expressions so writing a lexer will not require
-any specialist tools. There are also a number of compiler-compiler
-tools available for Java programs which I can exploit to produce a
-capable interpreter.
-
-I will also require a selection of programs that best demonstrate the
-power of passing object streams and the advantages of network
-transparency. With the additional metadata available to the system I
-will implement set of object stream manipulation tools, based on the
-relational algebra. Additionally I will implement a subset of the
-functionality offered by BusyBox \cite{busybox}, which offers a
-minimal shell for embedded devices. This will focus on file
-manipulation to demonstrate the network transparency, and commands
-that provide interesting data (such as \texttt{who}, \texttt{ls} and
-\texttt{traceroute}).
+To demonstrate the additional power due to using structured data, I
+will also develop a selection of tools that provide interesting data
+to analyse through the oosh facilities. I will largely base this on a
+subset of the functionality offered by BusyBox \cite{busybox}. Other
+sources of data include the filesystem itself and logs. This will
+enable the user to easily build scripts that analyse (for example)
+disk space consumption over time broken down by permissions and
+filetype, application logging for high CPU applications with
+visualisations or nearby router performance versus facilities offered
+by the router.
 
 \section*{Success Criteria}
 The final outcome of the project should provide:
@@ -136,7 +141,7 @@ The final outcome of the project should provide:
 
 \section*{Timetable and Milestones}
 
-\subsection*{Weeks 1 and 2}
+\subsection*{Weeks 1 and 2 (8/10/2009 to 21/10/2009)}
 Write the project proposal. Set up code repository on public facing
 server. Write skeleton code and test code repository. Design and
 implement object stream structure. Set up a test harness to facilitate
@@ -145,14 +150,14 @@ unit testing. Research Java console libraries.
 Milestones: Proposal written and submitted. Some basic code available
 in git repository.
 
-\subsection*{Weeks 3 and 4}
+\subsection*{Weeks 3 and 4 (22/10/2009 to 4/11/2009)}
 Research most used Unix command line tools. Select a collection to
 implement, plus some others which demonstrate the power of object
 streams. Implement them.
 
 Milestones: Several commands available to be run within oosh.
 
-\subsection*{Weeks 5 and 6}
+\subsection*{Weeks 5 and 6 (5/11/2009 to 18/11/2009)}
 Research Java networking facilities and develop network independence
 features. Add command line tools which demonstrate its
 usefulness. Start benchmarking to measure networking overhead and
@@ -161,7 +166,7 @@ tolerance to network losses.
 Milestones: Commands available within oosh that use the networking
 facilities. Some raw benchmark data collected.
 
-\subsection*{Weeks 7 and 8}
+\subsection*{Weeks 7 and 8 (19/11/2009 to 2/12/2009)}
 Finalise oosh syntax for shell scripting. Implement
 interpreter. Research most common bash shell scripts. Create
 demonstration oosh shell scripts.
@@ -171,27 +176,35 @@ written and working.
 
 {\bf End of Michaelmas term}.
 
-\subsection*{Weeks 9 and 10}
-Slack time. Extend test coverage. Add UI polish.
+\subsection*{Weeks 9 to 11 (3/12/2009 to 23/12/2009)}
+Slack time. Extend test coverage. Add UI polish. Implement data
+visualisation facilities.
 
 Milestones: Higher test coverage. Shell tab completion. Oosh reaches
 feature completion.
 
 {\bf Beginning of Lent term}.
 
-\subsection*{Week 11}
+\subsection*{Week 12 (14/1/2010 to 20/1/2010)}
 Write progress report. Prepare demonstration. Review timetable.
 
 Milestones: Written and submitted progress report. Prepared and given
 demonstration. Finalised timetable available.
 
-\subsection*{Weeks 12 to 17}
-Write dissertation. Write text, draw figures, prepare bibliography.
+\subsection*{Weeks 13 to 15 (21/1/2010 to 10/2/2010)}
+Write main body dissertation including preparation and
+implementation. Write text, draw figures, prepare bibliography.
 
-Milestones: Dissertation written and proof read by at least supervisor
-and director of studies.
+Milestones: Main body of dissertation written.
 
-\subsection*{Week 18}
+\subsection*{Weeks 16 to 18 (11/2/2010 to 3/3/2010)}
+Write evaluation section of dissertation. Perform any remaining
+benchmarks as necessary.
+
+Milestones: Text of dissertation complete and proof read by at
+least supervisor and director of studies.
+
+\subsection*{Week 19 (4/3/2010 to 10/3/2010)}
 Solicit dissertation feedback. Exchange dissertations with other
 students and proof read. Print dissertation.
 
@@ -199,7 +212,8 @@ Milestones: Paper copy of final dissertation draft.
 
 {\bf End of Lent term}.
 
-{\bf Dissertation and source code due on the 14 May 210}.
+{\bf Dissertation and source code due on the 14 May 2010}.
+
 
 \begin{thebibliography}{9} % at most 9 citations
 
