@@ -64,7 +64,9 @@ command line interface. Traditionally they have been written in C,
 only passing text streams between programs.
 
 I intend to extend this idea to an `object stream' where the data
-passed between programs contains semantic structure and metadata. 
+passed between programs contains semantic structure and metadata. This
+will enable powerful data manipulation and processing that is not
+possible with a traditional shell.
 
 Due to the age of the Unix shell design (with many design decisions
 unchanged from the original Unix shell circa 1971 \cite{firstshell})
@@ -74,7 +76,7 @@ another system and ran it there. Whilst applications (such as
 \texttt{telnet} and \texttt{ssh}) have long supported file transfer
 they are not part of the Unix shell abstraction.
 
-My design will modify the basic shell design such that programs are
+My design will also modify the basic shell design such that programs are
 presented with files stored both locally and remotely, transparent to
 the program performing the computation. This will make Unix commands
 such as \texttt{scp} redundant as \texttt{cp} could be used in its
@@ -114,16 +116,16 @@ development of tools that understand the data that flows through
 them. This will enable the creation of tools that visualise the data
 in a natural way.
 
-To demonstrate the additional power due to using structured data, I
-will also develop a selection of tools that provide interesting data
-to analyse through the oosh facilities. I will largely base this on a
-subset of the functionality offered by BusyBox \cite{busybox}. Other
-sources of data include the filesystem itself and logs. This will
-enable the user to easily build scripts that analyse (for example)
-disk space consumption over time broken down by permissions and
-filetype, application logging for high CPU applications with
-visualisations or nearby router performance versus facilities offered
-by the router.
+To demonstrate the additional power due to manipulating structured
+data, I will also develop a selection of tools that provide
+interesting data to analyse through the oosh facilities. I will
+largely base this on a subset of the functionality offered by BusyBox
+\cite{busybox}. Other sources of data will include the filesystem
+itself and logs. This will enable the user to easily build scripts
+that analyse (for example) disk space consumption over time broken
+down by permissions and filetype, application logging for high CPU
+applications with visualisations or nearby router performance versus
+facilities offered by the router.
 
 \section*{Success Criteria}
 The final outcome of the project should provide:
