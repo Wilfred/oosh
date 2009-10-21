@@ -69,37 +69,38 @@ will enable powerful data manipulation and processing that is not
 possible with a traditional shell.
 
 Due to the age of the Unix shell design (with many design decisions
-unchanged from the original Unix shell circa 1971 \cite{firstshell})
-the concept of multiple capable terminals connected to the network was
-not considered. A user either ran his shell locally or dialled in to
-another system and ran it there. Whilst applications (such as
-\texttt{telnet} and \texttt{ssh}) have long supported file transfer
-they are not part of the Unix shell abstraction.
+unchanged from the original Unix shell circa 1971 \cite{firstshell}),
+the design is simple since the computer systems it first ran on
+offered limited power. A traditional shell always copies data to the
+next program in the pipe. This also requires remote data locations to
+be mounted before the data could be used.
 
-My design will also modify the basic shell design such that programs are
-presented with files stored both locally and remotely, transparent to
-the program performing the computation. This will make Unix commands
-such as \texttt{scp} redundant as \texttt{cp} could be used in its
-place.
+My design will modify the basic shell design so that programs are
+presented with file pointers that point to local or remote files. A
+user may therefore write a simple script that accesses a file in a
+compressed archive stored remotely. A traditional shell would require
+him to learn a heterogeneous collection of commands that connect to
+different protocols or decompress different file types.
 
 \section*{Resources Required}
 I plan to perform most of my work using my personal computer. The code
 will be stored in a remote git repository so I need an Internet
 connection to push my changes there regularly. If necessary I can move
-to any Internet connected system that offers a Java compiler.
+to any Internet connected Unix system that offers a Python interpreter.
 
 \section*{Starting Point}
 My personal computer has run Linux for some time so I have some
 expertise with Unix systems and shells. I also attended the Unix tools
-lectures given by Dr Marcus Kuhn during part IB. I have experience in
-Java due to the Java courses run in parts IA and IB, and have learnt
-Emacs over the summer vacation.
+lectures given by Dr Marcus Kuhn during part IB. My Python experience
+is simply some toy programs I have written in the past. Finally, I
+have learnt Emacs over the summer vacation.
 
 \section*{Substance and Structure of the Project}
-The project will be written in Java due to it supporting
-object-oriented programming and a safe type-system. I intend to fully
-exploit the wider Java ecosystem, using the tools available to perform
-tasks such as parser building and test framework development.
+The project will be written in Python due to it being a mature
+interpreted language that supports object oriented programming. I
+intend to fully exploit the wider Python ecosystem, using the tools
+available to perform tasks such as parser building and test framework
+development.
 
 The shell itself will offer a full interpreter for shell scripts,
 using a syntax similar to that found in bash \cite{bash}. POSIX
@@ -108,36 +109,49 @@ research projects in this area have not aimed for compliance to improve
 readability \cite{fish} or power \cite{powershell}. I will therefore
 extend the bash syntax to make shell scripts more expressive. 
 
-I will generalise the idea of utilities such as \texttt{grep} to the
-full complement of the relational algebra (since a number of common
-program output data in a tabular structure). With the addition of
-metadata to what was previously unstructured text data I can develop
-applications that are content-aware; capable of modifying their
-behaviour based on data format. Semantic information available also
-enables the development of tools that understand the data that flows
-through them. This will enable the creation of tools that visualise
-the data in a natural way.
+Many Unix utilities output data in columns, largely for readability. I
+intend to make this convention a requirement, so that data is always
+structured in a tabular format. This will enable me to generalise the
+idea of utilities such as \texttt{grep} to offer the user more powerful data
+manipulation facilities. I will implement a set of programs that make
+the full expressiveness of the relational algebra available.
+
+With the addition of metadata to what was previously unstructured text
+data I can develop applications that are content-aware; capable of
+modifying their behaviour based on data format. Semantic information
+available also enables the development of tools that understand the
+data that flows through them. This will enable the creation of tools
+that visualise the data in a natural way.
 
 To demonstrate the additional power due to manipulating structured
 data, I will also develop a selection of tools that provide
-interesting data to analyse through the oosh facilities. I will
-largely base this on a subset of the functionality offered by BusyBox
-\cite{busybox}. Other sources of data will include the filesystem
-itself and logs. This will enable the user to easily build scripts
-that analyse (for example) disk space consumption over time broken
-down by permissions and filetype, application logging for high CPU
-applications with visualisations or nearby router performance versus
-facilities offered by the router.
+interesting data to analyse through the oosh facilities. Obvious
+sources of interesting data include the filesystem, logs, system
+maintenance tools and network testing tools. This will enable the user
+to easily build scripts that analyse (for example) disk space
+consumption over time broken down by permissions and filetype,
+application logging for high CPU applications with visualisations or
+nearby router performance versus facilities offered by the router.
 
 \section*{Success Criteria}
 The final outcome of the project should provide:
 
 \begin{enumerate}
-\item A oosh shell syntax interpreter with some example scripts
-\item Network transparent file access to programs run within oosh with
-  some programs which exploit this
-\item Some programs which exploit the fact that the object stream
-  contains semantic information
+\item A oosh shell syntax interpreter
+\item Some example scripts, including:
+  \begin{itemize}
+  \item drawing a chart that shows disk space consumption separated by
+    permissions and filetype
+  \item drawing a graph of hop-by-hop router latency relative to the
+    local host
+  \item monitoring CPU usage for different users or groups
+  \item fetching and compiling source code from remote servers
+  \end{itemize}
+\item Network transparent file access to programs run within oosh,
+  including FTP and HTTP support
+\item Programs which exploit the fact that the object stream
+  contains semantic information, including relational algebra
+  functionality and automatic graph generation
 \item A collection of benchmarks which show the speed difference
   between oosh and other shells
 \item A clearly structured dissertation
@@ -145,16 +159,17 @@ The final outcome of the project should provide:
 
 \section*{Timetable and Milestones}
 
-\subsection*{Weeks 1 and 2 (8/10/2009 to 21/10/2009)}
+% this end date pushed back slightly due to language change
+\subsection*{Weeks 1 and 2 (8/10/2009 to 24/10/2009)}
 Write the project proposal. Set up code repository on public facing
 server. Write skeleton code and test code repository. Design and
 implement object stream structure. Set up a test harness to facilitate
-unit testing. Research Java console libraries.
+unit testing. Research Python console libraries.
 
 Milestones: Proposal written and submitted. Some basic code available
 in git repository.
 
-\subsection*{Weeks 3 and 4 (22/10/2009 to 4/11/2009)}
+\subsection*{Weeks 3 and 4 (25/10/2009 to 4/11/2009)}
 Research most used Unix command line tools. Select a collection to
 implement, plus some others which demonstrate the power of object
 streams. Implement them.
@@ -162,7 +177,7 @@ streams. Implement them.
 Milestones: Several commands available to be run within oosh.
 
 \subsection*{Weeks 5 and 6 (5/11/2009 to 18/11/2009)}
-Research Java networking facilities and develop network independence
+Research Python networking facilities and develop network independence
 features. Add command line tools which demonstrate its
 usefulness. Start benchmarking to measure networking overhead and
 tolerance to network losses.
@@ -249,11 +264,6 @@ Milestones: Paper copy of final dissertation draft.
   \emph{Windows Powershell Quickstart}.
   http://channel9.msdn.com/wiki/windowspowershellquickstart/ fetched
   15th October 2009.
-
-\bibitem{busybox}
-  Erik Andersen, Rob Landley and Denys Vlasenko,
-  \emph{BusyBox - The Swiss Army Knife of Embedded Linux}.
-  http://www.busybox.net/ fetched 15th October 2009.
 
 \end{thebibliography}
 
