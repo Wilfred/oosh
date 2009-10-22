@@ -103,16 +103,16 @@ development.
 
 The shell itself will offer a full interpreter for shell scripts,
 using a syntax similar to that found in bash \cite{bash}. POSIX
-compliance \cite{posix} is not necessary for this project, and other
-research projects in this area have not aimed for compliance to improve
+compliance requires a standard shell syntax \cite{posix}, but other
+projects in this area have not aimed for compliance to improve
 readability \cite{fish} or power \cite{powershell}. I will therefore
-extend the bash syntax to make shell scripts more expressive. 
+modify the bash syntax to make shell scripts more expressive.
 
 Many Unix utilities output data in columns, largely for readability. I
 intend to make this convention a requirement, so that data is always
 structured in a tabular format. This will enable me to generalise the
 idea of utilities such as \texttt{grep} to offer the user more
-powerful data manipulation facilities. By added tagging functionality
+powerful data manipulation facilities. By adding tagging functionality,
 information for the user may be separated from numerical data.
 
 With the addition of metadata to what was previously unstructured text
