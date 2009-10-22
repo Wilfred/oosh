@@ -72,15 +72,14 @@ Due to the age of the Unix shell design (with many design decisions
 unchanged from the original Unix shell circa 1971 \cite{firstshell}),
 the design is simple since the computer systems it first ran on
 offered limited power. A traditional shell always copies data to the
-next program in the pipe. This also requires remote data locations to
-be mounted before the data could be used.
+next program in the pipe.
 
 My design will modify the basic shell design so that programs are
-presented with file pointers that point to local or remote files. A
-user may therefore write a simple script that accesses a file in a
-compressed archive stored remotely. A traditional shell would require
-him to learn a heterogeneous collection of commands that connect to
-different protocols or decompress different file types.
+presented with file pointers that point to local or remote files. The
+shell may then dynamically decide which host to run each part of the
+pipeline. The addition of file pointers enables me to distinguish
+destructive and non-destructive operations, permitting the shell to
+cache non-destructive pipeline operations to improve responsiveness.
 
 \section*{Resources Required}
 I plan to perform most of my work using my personal computer. The code
@@ -92,7 +91,7 @@ to any Internet connected Unix system that offers a Python interpreter.
 My personal computer has run Linux for some time so I have some
 expertise with Unix systems and shells. I also attended the Unix tools
 lectures given by Dr Marcus Kuhn during part IB. I already have some
-inital experience writing Python code. Finally, I learnt Emacs over
+initial experience writing Python code. Finally, I learnt Emacs over
 the summer vacation.
 
 \section*{Substance and Structure of the Project}
@@ -112,9 +111,9 @@ extend the bash syntax to make shell scripts more expressive.
 Many Unix utilities output data in columns, largely for readability. I
 intend to make this convention a requirement, so that data is always
 structured in a tabular format. This will enable me to generalise the
-idea of utilities such as \texttt{grep} to offer the user more powerful data
-manipulation facilities. I will implement a set of programs that make
-the full expressiveness of the relational algebra available.
+idea of utilities such as \texttt{grep} to offer the user more
+powerful data manipulation facilities. By added tagging functionality
+information for the user may be separated from numerical data.
 
 With the addition of metadata to what was previously unstructured text
 data I can develop applications that are content-aware; capable of
@@ -126,34 +125,30 @@ that visualise the data in a natural way.
 To demonstrate the additional power due to manipulating structured
 data, I will also develop a selection of tools that provide
 interesting data to analyse through the oosh facilities. Obvious
-sources of interesting data include the filesystem, logs, system
-maintenance tools and network testing tools. This will enable the user
-to easily build scripts that analyse (for example) disk space
-consumption over time broken down by permissions and file type,
-application logging for high CPU applications with visualisations or
-nearby router performance versus facilities offered by the router.
+sources of interesting data include the file system, logs, system
+maintenance tools and network testing tools.
+
+Finally, the shell will also offer network aware
+computation. Pipelines may be constructed that dynamically move
+computation between local and remote hosts to improve responsiveness.
 
 \section*{Success Criteria}
 The final outcome of the project should provide:
 
 \begin{enumerate}
 \item A oosh shell syntax interpreter
-\item Some example scripts, including:
+\item Some example scripts, which demonstrate
   \begin{itemize}
-  \item drawing a chart that shows disk space consumption separated by
-    permissions and file type
-  \item drawing a graph of hop-by-hop router latency relative to the
-    local host
-  \item monitoring CPU usage for different users or groups
-  \item fetching and compiling source code from remote servers
+  \item powerful data mining
+  \item graphing of data produced
   \end{itemize}
-\item Network transparent file access to programs run within oosh,
-  including FTP and HTTP support
-\item Programs which exploit the fact that the object stream
-  contains semantic information, including relational algebra
-  functionality and automatic graph generation
-\item A collection of benchmarks which show the speed difference
-  between oosh and other shells
+\item Network transparent file access and computation for programs
+  run within oosh
+\item Programs which exploit the fact that the object stream contains
+  semantic information, including data manipulation functionality
+\item Automatic shell optimisation based on statistics collected by
+  the shell
+\item A quantitative evaluation between oosh and other shells
 \item A clearly structured dissertation
 \end{enumerate}
 
@@ -179,8 +174,7 @@ Milestones: Several commands available to be run within oosh.
 \subsection*{Weeks 5 and 6 (5/11/2009 to 18/11/2009)}
 Research Python networking facilities and develop network independence
 features. Add command line tools which demonstrate its
-usefulness. Start benchmarking to measure networking overhead and
-tolerance to network losses.
+usefulness. Start benchmarking, particularly with networking.
 
 Milestones: Commands available within oosh that use the networking
 facilities. Some raw benchmark data collected.
@@ -232,7 +226,6 @@ Milestones: Paper copy of final dissertation draft.
 {\bf End of Lent term}.
 
 {\bf Dissertation and source code due on the 14 May 2010}.
-
 
 \begin{thebibliography}{9} % at most 9 citations
 
