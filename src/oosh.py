@@ -8,9 +8,10 @@ from cmd import Cmd
 import readline
 
 # Cmd gives us: ? (sugar for command 'help') ! (sugar for command 'shell')
-# and do_whatever() to implement builtins
+# do_whatever() to implement builtins, help_whatever() to document
 class Oosh(Cmd):
-    # the exciting bit -- execute command
+    objectstream = []
+    # the exciting bit -- execute a command
     def onecmd(self, line):
         cmd, arg, line = self.parseline(line)
         if not line:
@@ -27,6 +28,14 @@ class Oosh(Cmd):
             except AttributeError:
                 return self.default(line)
             return func(arg)
+
+    # print our leftover objects after pipeline completion
+    # TODO: learn arguments' purpose
+    def postcmd(self, stop, line):
+        for droplet in self.objectstream:
+            for entry in droplet.entries:
+                print(entry)
+        return stop
 
     # define error message with unknown command
     def default(self, line):
@@ -45,6 +54,17 @@ class Oosh(Cmd):
         self.print_topics("shell [shell command]", 
                           ["Execute a command in bash"], 15, 80)
 
-shell = Oosh()
-shell.prompt = "$ "
-shell.cmdloop("Welcome to oosh.")
+    def do_echo(self, line):
+        # TODO: need to check syntax
+        # TODO: need to properly input/output droplets
+        columns = line.split(" ")
+        self.objectstream = [Droplet(columns)]
+
+# an object stream is made of droplets
+class Droplet:
+    def __init__(self, entries):
+        self.entries = entries
+
+oosh = Oosh()
+oosh.prompt = "$ "
+oosh.cmdloop("Welcome to oosh.")
