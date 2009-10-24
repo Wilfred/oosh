@@ -7,14 +7,14 @@ from cmd import Cmd
 # we will modify this later for object caching alongside
 import readline
 
-# Cmd gives us: ? (sugar for command 'help') ! (shell escape)
+# Cmd gives us: ? (sugar for command 'help') ! (sugar for command 'shell')
 # and do_whatever() to implement builtins
 class Oosh(Cmd):
     # the exciting bit -- execute command
     def onecmd(self, line):
         cmd, arg, line = self.parseline(line)
         if not line:
-            return self.emptyline()
+            return # do nothing with empty line
         if cmd is None:
             return self.default(line)
         self.lastcmd = line
@@ -28,9 +28,6 @@ class Oosh(Cmd):
                 return self.default(line)
             return func(arg)
 
-    # override annoying default behaviour for empty lines
-    def emptyline(self):
-        return
     # define error message with unknown command
     def default(self, line):
         args = line.split(" ")
@@ -39,9 +36,14 @@ class Oosh(Cmd):
     # basic builtins
     def do_exit(self, line):
         exit()
+    def help_exit(self):
+        self.print_topics("exit", ["Exit oosh"], 15, 80)
+
     def do_shell(self, line):
         print("shell escape coming soon")
-
+    def help_shell(self):
+        self.print_topics("shell [shell command]", 
+                          ["Execute a command in bash"], 15, 80)
 
 shell = Oosh()
 shell.prompt = "$ "
