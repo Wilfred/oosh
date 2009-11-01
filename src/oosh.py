@@ -84,8 +84,8 @@ class Oosh(Cmd):
             pipeout.append(Droplet(selected))
         return pipeout
     def help_select(self):
-        self.print_topics("select [blah]", 
-                          ["Todo"], 15, 80)
+        self.print_topics("select [column1 column2 ...]", 
+                          ["Only returns droplets with the column names given (assumes column names are single word)"], 15, 80)
 
 # an object stream is made of droplets
 class Droplet:
