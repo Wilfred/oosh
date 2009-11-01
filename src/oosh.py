@@ -17,7 +17,7 @@ class Oosh(Cmd):
         # split pipe and evaluate
         pipeddata = []
         for section in line.split('|'):
-            pipeddata = self.pipedcmd(line, pipeddata)
+            pipeddata = self.pipedcmd(section, pipeddata)
 
         # print result of pipe
         x = 1
@@ -85,6 +85,7 @@ class Droplet:
         
         self.entries = values
 
-oosh = Oosh()
-oosh.prompt = "$ "
-oosh.cmdloop("Welcome to oosh.")
+if __name__=='__main__':
+    oosh = Oosh()
+    oosh.prompt = "$ "
+    oosh.cmdloop("Welcome to oosh.")
