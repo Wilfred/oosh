@@ -66,24 +66,48 @@ class Oosh(Cmd):
 
     def do_echo(self, line, pipein):
         # echo text data inputted by user
-        # TODO: need to properly input/output droplets
         return [Droplet(line)]
+    def help_echo(self):
+        self.print_topics("echo [item1, item2, ...]", 
+                          ["Create a list of items for the pipe"], 15, 80)
 
-    def do_select(self, line):
-        return []
+    def do_select(self, line, pipein):
+        args = line.split(" ") # command name is not passed
+        pipeout = []
+        for droplet in pipein:
+            selected = []
+            for entry in droplet.entries:
+                for columnname in args:
+                    name = entry.split(':')[0]
+                    if name == columnname:
+                        selected.append(entry)
+            pipeout.append(Droplet(selected))
+        return pipeout
+    def help_select(self):
+        self.print_topics("select [blah]", 
+                          ["Todo"], 15, 80)
 
 # an object stream is made of droplets
 class Droplet:
-    def __init__(self, valuestring):
-        # values always take the form "name":"value", tolerating
-        # newlines but we escape ""
-        values = re.findall('".*?":".*?"', valuestring,
-                            flags=re.DOTALL)
-        for value in values:
-            # strip leading and trailing ", replace ":" with :
-            value = value[1:][:-1].replace('":"',':').replace('""','"')
-        
-        self.entries = values
+    def __init__(self, value):
+        if isinstance(value, str):
+            self.entries = parse(value)
+        elif isinstance(value, list):
+            self.entries = value
+        else:
+            raise TypeError    
+
+# helper functions:
+def parse(ooshstring):
+    # values always take the form "name":"value", tolerating
+    # newlines but we escape ""
+    exprs = re.findall('".*?":".*?"', ooshstring,
+                        flags=re.DOTALL)
+    values = []
+    for value in exprs:
+        # strip leading and trailing ", replace ":" with :
+        values.append(value[1:][:-1].replace('":"',':').replace('""','"'))
+    return values
 
 if __name__=='__main__':
     oosh = Oosh()
