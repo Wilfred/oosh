@@ -32,13 +32,13 @@ class Oosh(Cmd):
         if not line:
             return [] # do nothing with empty line
         if cmd is None or cmd == '':
-            return self.default(line)
+            return self.default(line, pipein)
         self.lastcmd = line
         try:
             # find a command with this name
             func = getattr(self, 'do_' + cmd)
         except AttributeError:
-            return self.default(line)
+            return self.default(line, pipein)
         return func(arg, pipein)
 
     # define error message with unknown command
