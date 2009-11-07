@@ -24,8 +24,7 @@ class Oosh(Cmd):
         for droplet in pipeddata:
             print("row", x)
             x += 1
-            for entry in droplet.entries:
-                print(entry)
+            droplet.print()
 
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
@@ -65,7 +64,7 @@ class Oosh(Cmd):
                           ["Execute a command in bash"], 15, 80)
 
     def do_echo(self, line, pipein):
-        # echo text data inputted by user
+        # echo text data inputted by user, drop pipe in
         return [Droplet(line)]
     def help_echo(self):
         self.print_topics("echo [item1, item2, ...]", 
@@ -78,7 +77,7 @@ class Oosh(Cmd):
             selected = []
             for entry in droplet.entries:
                 for columnname in args:
-                    name = entry.split(':')[0]
+                    name = entry[0]
                     if name == columnname:
                         selected.append(entry)
             pipeout.append(Droplet(selected))
@@ -95,19 +94,21 @@ class Droplet:
         elif isinstance(value, list):
             self.entries = value
         else:
-            raise TypeError    
+            raise TypeError
+    def print(self):
+        print(self.entries)
 
 # helper functions:
 def parse(ooshstring):
     # values always take the form "name":"value", tolerating
     # newlines but we escape ""
-    exprs = re.findall('".*?":".*?"', ooshstring,
-                        flags=re.DOTALL)
-    values = []
-    for value in exprs:
-        # strip leading and trailing ", replace ":" with :
-        values.append(value[1:][:-1].replace('":"',':').replace('""','"'))
-    return values
+    keyandvalue = re.findall('".*?":".*?"', ooshstring,
+                             flags=re.DOTALL)
+    # strip leading and trailng "
+    stripped = [s[1:][:-1] for s in keyandvalue]
+    # separate into column name, value pairs
+    pairs = [s.split('":"') for s in stripped]
+    return pairs
 
 if __name__=='__main__':
     oosh = Oosh()
