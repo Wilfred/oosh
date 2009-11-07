@@ -73,6 +73,7 @@ class Oosh(Cmd):
     def do_select(self, line, pipein):
         args = line.split(" ") # command name is not passed
         pipeout = []
+        # refactor me!
         for droplet in pipein:
             selected = []
             for entry in droplet.entries:
@@ -85,6 +86,22 @@ class Oosh(Cmd):
     def help_select(self):
         self.print_topics("select [column1 column2 ...]", 
                           ["Only returns droplets with the column names given (assumes column names are single word)"], 15, 80)
+
+    def do_rename(self, line, pipein):
+        args = re.findall('".*?"', line, flags=re.DOTALL)
+        # strip "
+        replacements = [s[1:][:-1] for s in args]
+        if len(replacements) % 2 != 0:
+            print('rename requires an even number of arguments')
+            raise PipeError
+        else:
+            for droplet in pipein:
+                for e in range(droplet.entries):
+                    # iterate over replacements
+                    for i in range(0,len(replacements),2):
+                        if replacement[i] = droplet.entries[e]:
+                            droplet.entries[e] = replacement[i+1]
+            return pipein
 
 # an object stream is made of droplets
 class Droplet:
