@@ -15,6 +15,7 @@ import pwd
 
 # Cmd gives us: ? (sugar for command 'help') ! (sugar for command 'shell')
 # do_whatever() to implement builtins, help_whatever() to document
+
 class Oosh(Cmd):
     # the exciting bit -- execute a command
     def onecmd(self, line):
@@ -22,24 +23,7 @@ class Oosh(Cmd):
         pipeddata = []
         for section in line.split('|'):
             pipeddata = self.pipedcmd(section, pipeddata)
-
-        # print result of pipe
-        # todo: needs to be generic, currently assumes first droplet
-        # chacterises all following droplets
-        if len(pipeddata) != 0:
-            header = ""
-            for key in pipeddata[0].entries:
-                header += key
-                header += "\t"
-            # print header truncating last tab
-            print(header[:-1])
-            # now print values we have collected
-            for droplet in pipeddata:
-                row = ""
-                for entry in droplet.entries:
-                    row += str(droplet.entries[entry])
-                    row += "\t"
-                print(row[:-1])
+        printstream(pipeddata)
 
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
@@ -156,6 +140,26 @@ def parse(ooshstring):
     # separate into column name, value pairs
     pairs = [s.split('":"') for s in stripped]
     return dict(pairs)
+
+def printstream(droplets):
+    # todo: needs to be generic, currently assumes first droplet
+    # chacterises all following droplets and order is unchanged
+    if len(droplets) == 0:
+        return
+
+    header = ""
+    for key in droplets[0].entries:
+        header += key
+        header += "\t"
+    print(header[:-1])
+
+    # now print values we have collected
+    for droplet in droplets:
+        row = ""
+        for entry in droplet.entries:
+            row += str(droplet.entries[entry])
+            row += "\t"
+        print(row[:-1])
 
 if __name__=='__main__':
     oosh = Oosh()
