@@ -91,13 +91,23 @@ class Oosh(Cmd):
             raise PipeError
         else:
             for droplet in pipein:
-                for entry in droplet.entries:
+                for entry in list(droplet.entries):
                     # iterate over replacements
                     for i in range(0,len(changes),2):
                         if changes[i] == entry:
                             value = droplet.entries.pop(entry)
                             droplet.entries[changes[i+1]] = value
             return pipein
+
+    def do_project(self, line, pipein):
+        args = re.findall('".*?"', line, flags=re.DOTALL)
+        # strip "
+        projected = [s[1:][:-1] for s in args]
+        for droplet in pipein:
+            for entry in list(droplet.entries):
+                if entry not in projected:
+                    del droplet.entries[entry]
+        return pipein
 
 # an object stream is made of droplets
 class Droplet:
