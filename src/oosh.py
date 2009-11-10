@@ -8,6 +8,10 @@ from cmd import Cmd
 import readline
 # regular expressions
 import re
+# list files for ls command
+import os
+# to enable us to convert user ids to strings
+import pwd
 
 # Cmd gives us: ? (sugar for command 'help') ! (sugar for command 'shell')
 # do_whatever() to implement builtins, help_whatever() to document
@@ -100,6 +104,7 @@ class Oosh(Cmd):
             return pipein
 
     def do_project(self, line, pipein):
+        # this duplicates some of select's functionality
         args = re.findall('".*?"', line, flags=re.DOTALL)
         # strip "
         projected = [s[1:][:-1] for s in args]
@@ -108,6 +113,16 @@ class Oosh(Cmd):
                 if entry not in projected:
                     del droplet.entries[entry]
         return pipein
+
+    def do_ls(self, line, pipein):
+        pipeout = []
+        for filename in os.listdir("."):
+            user = pwd.getpwuid(os.stat(filename).st_uid).pw_name
+            size = os.stat(filename).st_size
+            fileinfo = [['Filename', filename], ['Owner', user],
+                        ['Size', size]]
+            pipeout.append(Droplet(fileinfo))
+        return pipeout
 
 # an object stream is made of droplets
 class Droplet:
