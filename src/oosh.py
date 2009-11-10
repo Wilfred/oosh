@@ -71,18 +71,13 @@ class Oosh(Cmd):
                           ["Create a list of items for the pipe"], 15, 80)
 
     def do_select(self, line, pipein):
+        # may be better to use similar arguments to rename
         args = line.split(" ") # command name is not passed
-        pipeout = []
-        # refactor me!
         for droplet in pipein:
-            selected = []
             for entry in droplet.entries:
-                for columnname in args:
-                    name = entry[0]
-                    if name == columnname:
-                        selected.append(entry)
-            pipeout.append(Droplet(selected))
-        return pipeout
+                if entry not in args:
+                    del droplet.entries[entry]
+        return pipein
     def help_select(self):
         self.print_topics("select [column1 column2 ...]", 
                           ["Only returns droplets with the column names given (assumes column names are single word)"], 15, 80)
@@ -95,18 +90,14 @@ class Oosh(Cmd):
             print('rename requires an even number of arguments')
             raise PipeError
         else:
-            pipeout = []
             for droplet in pipein:
-                newentries = []
                 for entry in droplet.entries:
                     # iterate over replacements
                     for i in range(0,len(changes),2):
-                        if changes[i] == entry[0]:
-                            newentries.append([changes[i+1], entry[1]])
-                        else:
-                            newentries.append(entry[0], entry[1])
-                pipeout.append(Droplet(newentries))
-            return pipeout
+                        if changes[i] == entry:
+                            value = droplet.entries.pop(entry)
+                            droplet.entries[changes[i+1]] = value
+            return pipein
 
 # an object stream is made of droplets
 class Droplet:
@@ -114,7 +105,7 @@ class Droplet:
         if isinstance(value, str):
             self.entries = parse(value)
         elif isinstance(value, list):
-            self.entries = value
+            self.entries = dict(value)
         else:
             raise TypeError
     def print(self):
@@ -130,7 +121,7 @@ def parse(ooshstring):
     stripped = [s[1:][:-1] for s in keyandvalue]
     # separate into column name, value pairs
     pairs = [s.split('":"') for s in stripped]
-    return pairs
+    return dict(pairs)
 
 if __name__=='__main__':
     oosh = Oosh()
