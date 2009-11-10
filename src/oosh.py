@@ -24,11 +24,22 @@ class Oosh(Cmd):
             pipeddata = self.pipedcmd(section, pipeddata)
 
         # print result of pipe
-        x = 1
-        for droplet in pipeddata:
-            print("row", x)
-            x += 1
-            droplet.print()
+        # todo: needs to be generic, currently assumes first droplet
+        # chacterises all following droplets
+        if len(pipeddata) != 0:
+            header = ""
+            for key in pipeddata[0].entries:
+                header += key
+                header += "\t"
+            # print header truncating last tab
+            print(header[:-1])
+            # now print values we have collected
+            for droplet in pipeddata:
+                row = ""
+                for entry in droplet.entries:
+                    row += str(droplet.entries[entry])
+                    row += "\t"
+                print(row[:-1])
 
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
@@ -133,8 +144,6 @@ class Droplet:
             self.entries = dict(value)
         else:
             raise TypeError
-    def print(self):
-        print(self.entries)
 
 # helper functions:
 def parse(ooshstring):
