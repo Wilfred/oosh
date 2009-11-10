@@ -17,13 +17,24 @@ import pwd
 # do_whatever() to implement builtins, help_whatever() to document
 
 class Oosh(Cmd):
+    savedpipes = {}
+
     # the exciting bit -- execute a command
     def onecmd(self, line):
-        # split pipe and evaluate
+        # split pipe and evaluate, honouring numbered pipes at end
         pipeddata = []
-        for section in line.split('|'):
-            pipeddata = self.pipedcmd(section, pipeddata)
-        printstream(pipeddata)
+        lasttoken = line.split(" ")[-1]
+        if re.match("\|[0-9]+", lasttoken) is None:
+            for section in line.split('|'):
+                pipeddata = self.pipedcmd(section, pipeddata)
+            printstream(pipeddata)
+        else: # we have a numbered pipe
+            line = " ".join(line.split(" ")[:-1]) # remove end pipe
+            for section in line.split('|'):
+                pipeddata = self.pipedcmd(section, pipeddata)
+            # save our piped data
+            self.savedpipes[lasttoken[1:]] = pipeddata
+
 
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
