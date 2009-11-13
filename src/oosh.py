@@ -62,6 +62,8 @@ class Droplet:
             self.entries = parse(value)
         elif isinstance(value, list):
             self.entries = dict(value)
+        elif isinstance(value, dict):
+            self.entries = value
         else:
             raise TypeError
 
