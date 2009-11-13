@@ -122,24 +122,27 @@ def parse(ooshstring):
     return dict(pairs)
 
 def printstream(droplets):
-    # todo: needs to be generic, currently assumes first droplet
-    # chacterises all following droplets and order is unchanged
+    # todo: fix since it assumes all droplet entries are only strings
     if len(droplets) == 0:
         return
 
-    header = ""
-    for key in droplets[0].entries:
-        header += key
-        header += "\t"
-    print(header[:-1])
-
-    # now print values we have collected
+    # print header
+    columns = []
     for droplet in droplets:
-        row = ""
-        for entry in droplet.entries:
-            row += str(droplet.entries[entry])
-            row += "\t"
-        print(row[:-1])
+        for key in droplet.entries:
+            if key not in columns:
+                columns.append(key)
+    print("\t".join(columns))
+
+    # print rows
+    for droplet in droplets:
+        row = []
+        for column in columns:
+            if column not in droplet.entries:
+                row.append('')
+            else:
+                row.append(droplet.entries[column])
+        print("\t".join(row))
 
 if __name__=='__main__':
     oosh = Oosh()
