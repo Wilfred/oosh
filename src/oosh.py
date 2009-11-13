@@ -19,21 +19,42 @@ import programs
 class Oosh(Cmd):
     savedpipes = {}
 
-    # the exciting bit -- execute a command
     def onecmd(self, line):
-        # split pipe and evaluate, honouring numbered pipes at end
+        # split command and evaluate, honouring numbered pipes
         pipeddata = []
-        lasttoken = line.split(" ")[-1]
-        if re.match("\|[0-9]+", lasttoken) is None:
+
+        if self.startswithnamedpipe(line):
+            pipes = self.getpipenames(line.split(" ")[0])
+            line = line.lstrip('|0123456789+')
+            if len(pipes) == 1:
+                pipeddata = self.savedpipes[pipes[0]]
+            else:
+                # do multi pipe to start
+                try:
+                    multipipe = [self.savedpipes[name] for name in pipes]
+                    cmd, arg, line = self.parseline(line)
+                    func = getattr(programs, 'do_multi_' + cmd)
+                except AttributeError:
+                    return self.default(line, pipeddata)
+                except KeyError:
+                    print("You have not saved a pipe of that name. Todo: state name")
+                    return self.default(line, pipeddata)
+                pipeddata = func(arg, multipipe)
+                # now strip the part of the command we executed
+                line = " ".join(line.split(" ")[2:])
+
+        if not self.endswithnamedpipe(line):
             for section in line.split('|'):
                 pipeddata = self.pipedcmd(section, pipeddata)
             printstream(pipeddata)
-        else: # we have a numbered pipe
-            line = " ".join(line.split(" ")[:-1]) # remove end pipe
+        else:
+            lasttoken = line.split(" ")[-1]
+            pipename = self.getpipenames(lasttoken)[0]
+            line = line.rstrip('|0123456789')
             for section in line.split('|'):
                 pipeddata = self.pipedcmd(section, pipeddata)
             # save our piped data
-            self.savedpipes[lasttoken[1:]] = pipeddata
+            self.savedpipes[pipename] = pipeddata
 
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
@@ -48,6 +69,27 @@ class Oosh(Cmd):
         except AttributeError:
             return self.default(line, pipein)
         return func(arg, pipein)
+
+    def startswithnamedpipe(self, line):
+        beginning = line.split(" ")[0]
+        # pipe syntax is |1+2+3 to combine saved pipes
+        if re.match("\|[0-9]+(\+[0-9]+)*", beginning) is None:
+            return False
+        else:
+            return True
+
+    def endswithnamedpipe(self, line):
+        end = line.split(" ")[-1]
+        if re.match("\|[0-9]+", end) is None:
+            return False
+        else:
+            return True
+
+    def getpipenames(self, pipenames):
+        pipes = pipenames.split("+")
+        # first has leading |
+        pipes[0] = pipes[0][1:]
+        return pipes
 
     # define error message with unknown command
     def default(self, line, pipein):

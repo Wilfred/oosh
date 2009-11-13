@@ -55,6 +55,8 @@ def do_rename(line, pipein):
                         droplet.entries[changes[i+1]] = value
         return pipein
 
+import re
+
 def do_project(line, pipein):
     # this duplicates some of select's functionality
     args = re.findall('".*?"', line, flags=re.DOTALL)
@@ -65,6 +67,14 @@ def do_project(line, pipein):
             if entry not in projected:
                 del droplet.entries[entry]
     return pipein
+
+# relational commands that take multiple pipes in
+def do_multi_union(line, pipesin):
+    pipeout = []
+    for pipe in pipesin:
+        for droplet in pipe:
+            pipeout.append(droplet)
+    return pipeout
 
 # interesting data commands
 import os
