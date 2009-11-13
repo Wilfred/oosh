@@ -55,66 +55,6 @@ class Oosh(Cmd):
         self.stdout.write('oosh doesn\'t know the command \'%s\'. Try typing \'help\' to list commands.\n'%args[0])
         return []
 
-<<<<<<< HEAD
-    # basic builtins
-    def do_help(self, line, pipein):
-        super(Oosh, self).do_help(line)
-        return []
-    def do_exit(self, line, pipein):
-        exit()
-        return [] # by convention
-    def help_exit(self):
-        self.print_topics("exit", ["Exit oosh"], 15, 80)
-
-    def do_shell(self, line, pipein):
-        print("shell escape coming soon")
-        return []
-    def help_shell(self):
-        self.print_topics("shell [shell command]", 
-                          ["Execute a command in bash"], 15, 80)
-
-    def do_echo(self, line, pipein):
-        # echo text data inputted by user, drop pipe in
-        return [Droplet(line)]
-    def help_echo(self):
-        self.print_topics("echo [item1, item2, ...]", 
-                          ["Create a list of items for the pipe"], 15, 80)
-
-    def do_select(self, line, pipein):
-        args = line.split(" ") # command name is not passed
-        pipeout = []
-        # refactor me!
-        for droplet in pipein:
-            selected = []
-            for entry in droplet.entries:
-                for columnname in args:
-                    name = entry[0]
-                    if name == columnname:
-                        selected.append(entry)
-            pipeout.append(Droplet(selected))
-        return pipeout
-    def help_select(self):
-        self.print_topics("select [column1 column2 ...]", 
-                          ["Only returns droplets with the column names given (assumes column names are single word)"], 15, 80)
-
-    def do_rename(self, line, pipein):
-        args = re.findall('".*?"', line, flags=re.DOTALL)
-        # strip "
-        replacements = [s[1:][:-1] for s in args]
-        if len(replacements) % 2 != 0:
-            print('rename requires an even number of arguments')
-            raise PipeError
-        else:
-            for droplet in pipein:
-                for e in range(droplet.entries):
-                    # iterate over replacements
-                    for i in range(0,len(replacements),2):
-                        if replacement[i] = droplet.entries[e]:
-                            droplet.entries[e] = replacement[i+1]
-            return pipein
-
-=======
->>>>>>> merged
 # an object stream is made of droplets
 class Droplet:
     def __init__(self, value):
