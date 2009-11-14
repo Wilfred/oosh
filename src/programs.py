@@ -1,29 +1,17 @@
 from oosh import Droplet
 
 # basics
-def do_help(line, pipein):
-    super(Oosh, self).do_help(line)
-    return []
-
 def do_exit(line, pipein):
     exit()
     return [] # by convention
-def help_exit():
-    self.print_topics("exit", ["Exit oosh"], 15, 80)
-    
+
 def do_shell(line, pipein):
     print("shell escape coming soon")
     return []
-def help_shell():
-    self.print_topics("shell [shell command]", 
-                      ["Execute a command in bash"], 15, 80)
-    
+
 def do_echo(line, pipein):
     # echo text data inputted by user, drop pipe in
     return [Droplet(line)]
-def help_echo():
-    self.print_topics("echo [item1, item2, ...]", 
-                      ["Create a list of items for the pipe"], 15, 80)
 
 # relational commands
 def do_select(line, pipein):
@@ -34,9 +22,6 @@ def do_select(line, pipein):
             if entry not in args:
                 del droplet.entries[entry]
     return pipein
-def help_select():
-    self.print_topics("select [column1 column2 ...]", 
-                      ["Only returns droplets with the column names given (assumes column names are single word)"], 15, 80)
 
 def do_rename(line, pipein):
     args = re.findall('".*?"', line, flags=re.DOTALL)

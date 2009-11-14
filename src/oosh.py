@@ -9,9 +9,6 @@ import readline
 # regular expressions
 import re
 
-# Cmd gives us: ? (sugar for command 'help') ! (sugar for command 'shell')
-# do_whatever() to implement builtins, help_whatever() to document
-
 # current location of oosh programs:
 # todo: create /usr/bin equivalent
 import programs
@@ -94,7 +91,7 @@ class Oosh(Cmd):
     # define error message with unknown command
     def default(self, line, pipein):
         args = line.split(" ")
-        self.stdout.write('oosh doesn\'t know the command \'%s\'. Try typing \'help\' to list commands.\n'%args[0])
+        self.stdout.write('oosh doesn\'t know the command \'%s\'.\n'%args[0])
         return []
 
 # an object stream is made of droplets
