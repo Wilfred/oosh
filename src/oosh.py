@@ -56,7 +56,7 @@ class Oosh(Cmd):
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
         if not line:
-            return [] # do nothing with empty line
+            return pipein # do nothing with empty line
         if cmd is None or cmd == '':
             return self.default(line, pipein)
         self.lastcmd = line
