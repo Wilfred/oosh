@@ -9,6 +9,8 @@ import readline
 # regular expressions
 import re
 
+import copy
+
 # current location of oosh programs:
 # todo: create /usr/bin equivalent
 import programs
@@ -60,7 +62,7 @@ class Oosh(Cmd):
     def multipipedcmd(self, line, pipes):
         # do multi pipe to start
         try:
-            multipipe = [self.savedpipes[name] for name in pipes]
+            multipipe = [copy.copy(self.savedpipes[name]) for name in pipes]
             cmd, arg, line = self.parseline(line)
             func = getattr(programs, 'do_multi_' + cmd)
         except AttributeError:

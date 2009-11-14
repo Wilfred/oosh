@@ -69,9 +69,9 @@ def do_multi_difference(line, pipesin):
     if len(pipesin) == 0:
         return []
     # we do (a-b)-c (left associative) n-ary set difference
-    pipeout = []
+    pipeout = pipesin[0]
     for i in range(1,len(pipesin)):
-        for droplet in pipesin[0]:
+        for droplet in pipesin[i]:
             if droplet in pipeout:
                 pipeout.remove(droplet)
     return pipeout
