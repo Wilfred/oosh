@@ -10,6 +10,8 @@ def do_shell(line, pipein):
     return []
 
 def do_echo(line, pipein):
+    if line == '':
+        return []
     # echo text data inputted by user, drop pipe in
     return [Droplet(line)]
 
