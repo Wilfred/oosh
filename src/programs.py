@@ -60,7 +60,20 @@ def do_multi_union(line, pipesin):
     pipeout = []
     for pipe in pipesin:
         for droplet in pipe:
-            pipeout.append(droplet)
+            # no duplicates:
+            if droplet not in pipeout:
+                pipeout.append(droplet)
+    return pipeout
+
+def do_multi_difference(line, pipesin):
+    if len(pipesin) == 0:
+        return []
+    # we do (a-b)-c (left associative) n-ary set difference
+    pipeout = []
+    for i in range(1,len(pipesin)):
+        for droplet in pipesin[0]:
+            if droplet in pipeout:
+                pipeout.remove(droplet)
     return pipeout
 
 # interesting data commands

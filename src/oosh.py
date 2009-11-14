@@ -108,6 +108,8 @@ class Droplet:
             self.entries = value
         else:
             raise TypeError
+    def __eq__(self, other):
+        return self.entries == other.entries
 
 # helper functions:
 def parse(ooshstring):
