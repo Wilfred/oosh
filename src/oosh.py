@@ -62,7 +62,7 @@ class Oosh(Cmd):
     def multipipedcmd(self, line, pipes):
         # do multi pipe to start
         try:
-            multipipe = [copy.copy(self.savedpipes[name]) for name in pipes]
+            multipipe = [copy.deepcopy(self.savedpipes[name]) for name in pipes]
             cmd, arg, line = self.parseline(line)
             func = getattr(programs, 'do_multi_' + cmd)
         except AttributeError:
@@ -145,7 +145,7 @@ def printstream(droplets):
             if column not in droplet.entries:
                 row.append('')
             else:
-                row.append(droplet.entries[column])
+                row.append(str(droplet.entries[column]))
         print("\t".join(row))
 
 if __name__=='__main__':

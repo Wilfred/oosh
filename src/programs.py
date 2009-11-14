@@ -76,6 +76,17 @@ def do_multi_difference(line, pipesin):
                 pipeout.remove(droplet)
     return pipeout
 
+def do_multi_product(line, pipesin):
+    # left associative 2-ary set product
+    if len(pipesin) == 0:
+        return []
+    pipeout = pipesin[0]:
+    for x in pipesin[0]:
+        for y in pipesin[1]:
+            result = x.entries.items() | y.entries.items()
+            pipeout.append(Droplet(dict(result)))
+    return pipeout
+  
 # interesting data commands
 import os
 import pwd
