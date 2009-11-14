@@ -26,17 +26,7 @@ class Oosh(Cmd):
             if len(pipes) == 1:
                 pipeddata = self.savedpipes[pipes[0]]
             else:
-                # do multi pipe to start
-                try:
-                    multipipe = [self.savedpipes[name] for name in pipes]
-                    cmd, arg, line = self.parseline(line)
-                    func = getattr(programs, 'do_multi_' + cmd)
-                except AttributeError:
-                    return self.default(line, pipeddata)
-                except KeyError:
-                    print("You have not saved a pipe of that name. Todo: state name")
-                    return self.default(line, pipeddata)
-                pipeddata = func(arg, multipipe)
+                pipeddata = self.multipipedcmd(line, pipes)
                 # now strip the part of the command we executed
                 line = " ".join(line.split(" ")[2:])
 
@@ -67,6 +57,19 @@ class Oosh(Cmd):
             return self.default(line, pipein)
         return func(arg, pipein)
 
+    def multipipedcmd(self, line, pipes):
+        # do multi pipe to start
+        try:
+            multipipe = [self.savedpipes[name] for name in pipes]
+            cmd, arg, line = self.parseline(line)
+            func = getattr(programs, 'do_multi_' + cmd)
+        except AttributeError:
+            return self.default(line, pipeddata)
+        except KeyError:
+            print("You have not saved a pipe of that name. Todo: state name")
+            return []
+        return func(arg, multipipe)
+     
     def startswithnamedpipe(self, line):
         beginning = line.split(" ")[0]
         # pipe syntax is |1+2+3 to combine saved pipes
