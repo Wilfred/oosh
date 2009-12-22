@@ -23,49 +23,71 @@ def p_commands(p):
                 | commands NAMEDPIPE
                 | command
                 |'''
-    # do nothing
+    if len(p) == 4:
+        p[0] = ('sequence', p[1], p[3])
+    elif len(p) == 3:
+        p[0] = ('savedpipe', p[1], p[2])
+    else:
+        p[0] = p[1]
 
 def p_for(p):
     '''for : FOR STRING IN values SEMICOLON DO commands SEMICOLON END'''
-    # TODO: repeat command
+    p[0] = ('for', p[2], p[4], p[7])
 
 def p_while(p):
     '''while : WHILE command SEMICOLON DO commands SEMICOLON END'''
-    # TODO: repeat command
+    p[0] = ('while', p[2], p[5])
 
 def p_if(p):
     '''if : IF command SEMICOLON commands SEMICOLON END
           | IF command SEMICOLON commands SEMICOLON ELSE SEMICOLON commands SEMICOLON END'''
-    # TODO: implement if-else
+    if len(p) == 6:
+        p[0] = ('if', p[2], p[4])
+    else:
+        p[0] = ('if-else', p[2], p[4], p[8])
 
 def p_assign(p):
     'assign : SET STRING value'
-    # TODO: variable assignment
+    p[0] = ('assign', p[2], p[3])
 
 def p_command(p):
     '''command : NAMEDPIPE simplecommand
                | simplecommand
-               | MULTIPIPE mcommand
-               | MULTIPIPE mcommand PIPE simplecommand'''
+               | MULTIPIPE multicommand
+               | MULTIPIPE multicommand PIPE simplecommand'''
     # TODO: command execution
+    if len(p) == 2:
+        p[0] = p[1]
 
 def p_values(p):
     '''values : value values
               | value'''
-    
+    if len(p) == 3:
+        p[0] = ('values', p[1], p[2])
+    else:
+        p[0] = p[1]
+
 def p_value(p):
     '''value : STRING
              | VARIABLE
              | PIPEELEMENT'''
+    if p[1][0] == '$':
+        p[0] = ('variable', p[1])
+    elif p[1][0] == '!':
+        p[0] = ('pipeelement', p[1])
+    else:
+        p[0] = ('string', p[1])
 
 def p_simplecommand(p):
     '''simplecommand : values
                 | simplecommand PIPE simplecommand'''
-    # todo: command lookup and execution
+    if len(p) == 2:
+        p[0] = ('simplecommand', p[1])
+    else:
+        p[0] = ('pipedcommand', p[1], p[3])
     
-    
-def p_mcommand(p):
-    '''mcommand : values'''
+def p_multicommand(p):
+    '''multicommand : values'''
 
 # Error rule for syntax errors
 def p_error(p):
@@ -78,14 +100,7 @@ def p_error(p):
 parser = yacc.yacc()
 
 print(sample)
-
-lexer.input(sample)
-
-for tok in lexer:
-    print(tok)
-
-result = parser.parse(sample)
-print(result)
+print(parser.parse(sample))
 
 # based on fish grammar, only enough to demonstrate pipe structure
 # fish grammar is modified bash grammar, see http://lwn.net/Articles/136232/
@@ -114,14 +129,14 @@ print(result)
 # // a command may be piped into others
 # COMMAND ::= NAMED_PIPE_IN SIMPLECOMMAND
 #         ::= SIMPLECOMMAND
-#         ::= MULTI_PIPE_IN MCOMMAND
-#         ::= MULTI_PIPE_IN MCOMMAND | SIMPLECOMMAND
+#         ::= MULTI_PIPE_IN MULTICOMMAND
+#         ::= MULTI_PIPE_IN MULTICOMMAND | SIMPLECOMMAND
 
 # // call a command
 # SIMPLECOMMAND ::= command_name[@HOST] [ ARG ... ]
 #          ::= SIMPLECOMMAND | SIMPLECOMMAND
 
-# MCOMMAND ::= multipipe_command_name[@HOST] [ ARG ...]
+# MULTICOMMAND ::= multipipe_command_name[@HOST] [ ARG ...]
 
 # VALUE ::= LITERAL
 #       ::= $VAR_NAME
