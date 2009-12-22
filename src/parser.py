@@ -3,7 +3,7 @@ sample = """
 set y foo; 
 for x in a b cde; do set y $x; end; 
 if 0; echo yes; else; echo no; end;
-while 1; do echo !4[0]; end;
+while yes; do echo foo; end;
 ls /tmp | select foo |3;
 |3+4 union |5
 """
@@ -11,7 +11,7 @@ ls /tmp | select foo |3;
 # now the parsing
 import ply.yacc as yacc
 
-# get token map
+# we need to know the tokens of our language
 from lexer import tokens
 
 def p_commands(p):
@@ -50,14 +50,21 @@ def p_assign(p):
     'assign : SET STRING value'
     p[0] = ('assign', p[2], p[3])
 
-def p_command(p):
-    '''command : NAMEDPIPE simplecommand
-               | simplecommand
-               | MULTIPIPE multicommand
+def p_command_simple(p):
+    'command : simplecommand'
+    p[0] = p[1]
+    
+def p_command_namedpipe(p):
+    'command : NAMEDPIPE simplecommand'
+    p[0] = ('savedpipe', p[1], p[2])
+
+def p_command_multipipe(p):
+    '''command : MULTIPIPE multicommand
                | MULTIPIPE multicommand PIPE simplecommand'''
-    # TODO: command execution
-    if len(p) == 2:
-        p[0] = p[1]
+    if len(p) == 3:
+        p[0] = ('multicommand', p[1], p[2])
+    else:
+        p[0] = ('sequence', ('multicommand', p[1], p[2]), p[3])
 
 def p_values(p):
     '''values : value values
@@ -85,6 +92,7 @@ def p_simplecommand(p):
     
 def p_multicommand(p):
     '''multicommand : values'''
+    p[0] = ('muticommand', p[1])
 
 # Error rule for syntax errors
 def p_error(p):
@@ -145,23 +153,3 @@ print(parser.parse(sample))
 # VAR // will be variables
 # LITERAL //whole numbers
 # VAR_NAME //any string
-
-# # abstract syntax tree:
-# class Node(object):
-#     def eval(self, context):
-#         raise NotImplementedError
-
-# class Add(object):
-#     def eval(self, context):
-#         return self.arg1.eval(context) + self.arg2.eval(context)
-# class For(object):
-#     def eval(self):
-        
-# class While(object):
-# class If(object):
-# class Assign(object):
-# class Sequence(object):
-# class SavedPipe(object):
-# class SimpleCommand(object):
-#     def __init__(self):
-        
