@@ -13,7 +13,7 @@ reserved = {
 }
 
 # remaining token names
-tokens = ['PIPE', 'NAMEDPIPE', 'MULTIPIPE', 'VARIABLE', 'PIPEELEMENT',
+tokens = ['PIPE', 'NAMEDPIPE', 'MULTIPIPE', 'VARIABLE',
           'STRING', 'SEMICOLON'] + list(reserved.values())
 
 # regex for simple tokens (do we want case sensitivity?)
@@ -22,8 +22,6 @@ t_PIPE = r'\|'
 t_NAMEDPIPE = r'\|[0-9]+' # e.g. |1 |2 |345
 t_MULTIPIPE = r'\|[0-9]+\+[0-9]+' # e.g. |1+2 |2+34
 t_VARIABLE = r'\$[a-zA-Z][a-zA-Z0-9]*' # e.g. $x $f00bar
-t_PIPEELEMENT = r'\![0-9]+\[[0-9]+\]' # e.g. !345[2] (second element of
-                                     # saved pipe 345)
 
 # ignored characters: spaces, tabs and newlines
 t_ignore = ' \t\n'

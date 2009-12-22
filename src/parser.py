@@ -69,12 +69,9 @@ def p_values(p):
 
 def p_value(p):
     '''value : STRING
-             | VARIABLE
-             | PIPEELEMENT'''
+             | VARIABLE'''
     if p[1][0] == '$':
         p[0] = ('variable', p[1])
-    elif p[1][0] == '!':
-        p[0] = ('pipeelement', p[1])
     else:
         p[0] = ('string', p[1])
 
