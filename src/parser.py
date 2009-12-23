@@ -8,7 +8,6 @@ ls /tmp | select foo |3;
 |3+4 union |5
 """
 
-# now the parsing
 import ply.yacc as yacc
 
 # we need to know the tokens of our language

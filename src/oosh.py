@@ -8,42 +8,72 @@ from cmd import Cmd
 import readline
 # regular expressions
 import re
-
 import copy
 
+from ooshparse import parser
 # current location of oosh programs:
 # todo: create /usr/bin equivalent
 import programs
+
+from subprocess import Popen # spawn processes
 
 class Oosh(Cmd):
     savedpipes = {}
 
     def onecmd(self, line):
-        # split command and evaluate, honouring numbered pipes
-        pipeddata = []
+        if line.strip(' \t\n') == '':
+            return
+        print("Input: ", line)
+        ast = parser.parse(line)
+        print("AST: ", ast)
+        self.eval(ast)
 
-        if self.startswithnamedpipe(line):
-            pipes = self.getpipenames(line.split(" ")[0])
-            line = line.lstrip('|0123456789+')
-            if len(pipes) == 1:
-                pipeddata = self.savedpipes[pipes[0]]
+    def eval(self, ast):
+        # sadly no case or pattern matching in python
+        if ast[0] == 'sequence':
+            eval(ast[1])
+            eval(ast[2])
+        elif ast[0] == 'savepipe':
+            pass
+        elif ast[0] == 'for':
+            pass
+        elif ast[0] == 'while':
+            pass
+        elif ast[0] == 'if':
+            if eval(ast[1]) == 0: # 0 is true for shells
+                eval(ast[2])
+        elif ast[0] == 'if-else':
+            if eval(ast[1]) == 0:
+                eval(ast[2])
             else:
-                pipeddata = self.multipipedcmd(line, pipes)
-                # now strip the part of the command we executed
-                line = " ".join(line.split(" ")[2:])
-
-        if not self.endswithnamedpipe(line):
-            for section in line.split('|'):
-                pipeddata = self.pipedcmd(section, pipeddata)
-            printstream(pipeddata)
-        else:
-            lasttoken = line.split(" ")[-1]
-            pipename = self.getpipenames(lasttoken)[0]
-            line = line.rstrip('|0123456789')
-            for section in line.split('|'):
-                pipeddata = self.pipedcmd(section, pipeddata)
-            # save our piped data
-            self.savedpipes[pipename] = pipeddata
+                eval(ast[3])
+        elif ast[0] == 'assign':
+            pass
+        elif ast[0] == 'derefpipe':
+            pass
+        elif ast[0] == 'multicommand':
+            pass
+        elif ast[0] == 'values':
+            pass
+        elif ast[0] == 'string':
+            pass
+        elif ast[0] == 'variable':
+            pass
+        elif ast[0] == 'simplecommand':
+            if ast[1][0] == 'string':
+                p1 = Popen([ast[1][1]])
+        elif ast[0] == 'derefmultipipe':
+            pass
+        elif ast[0] == 'pipedcommand':
+            pass
+        elif ast[0] == 'multicommmand':
+            pass
+        # None (from trailing semicolon)
+        elif ast[0] is None:
+            pass
+        if not p1 is None:
+            p1.wait()
+        return 0
 
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
