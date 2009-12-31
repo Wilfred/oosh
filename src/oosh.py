@@ -13,12 +13,14 @@ import copy
 from ooshparse import parser
 # current location of oosh programs:
 # todo: create /usr/bin equivalent
-import programs
+# import programs
 
 from subprocess import Popen # spawn processes
+import subprocess
 
 class Oosh(Cmd):
     savedpipes = {}
+    variables = {}
 
     def onecmd(self, line):
         if line.strip(' \t\n') == '':
@@ -29,10 +31,16 @@ class Oosh(Cmd):
         self.eval(ast)
 
     def eval(self, ast):
+        if ast is None:
+            print('Evaluated empty tree')
+            return
+
+        p1 = None
+        returncode = 0
         # sadly no case or pattern matching in python
         if ast[0] == 'sequence':
-            eval(ast[1])
-            eval(ast[2])
+            self.eval(ast[1])
+            self.eval(ast[2])
         elif ast[0] == 'savepipe':
             pass
         elif ast[0] == 'for':
@@ -40,40 +48,59 @@ class Oosh(Cmd):
         elif ast[0] == 'while':
             pass
         elif ast[0] == 'if':
-            if eval(ast[1]) == 0: # 0 is true for shells
-                eval(ast[2])
+            if self.eval(ast[1]) == 0: # 0 is true for shells
+                self.eval(ast[2])
         elif ast[0] == 'if-else':
-            if eval(ast[1]) == 0:
-                eval(ast[2])
+            if self.eval(ast[1]) == 0:
+                self.eval(ast[2])
             else:
-                eval(ast[3])
+                self.eval(ast[3])
         elif ast[0] == 'assign':
-            pass
+            self.variables[ast[1]] = self.flattentree(ast[2])[0]
         elif ast[0] == 'derefpipe':
             pass
         elif ast[0] == 'multicommand':
             pass
-        elif ast[0] == 'values':
-            pass
-        elif ast[0] == 'string':
-            pass
-        elif ast[0] == 'variable':
-            pass
         elif ast[0] == 'simplecommand':
-            if ast[1][0] == 'string':
-                p1 = Popen([ast[1][1]])
+            p1 = Popen(self.flattentree(ast[1]))
+            returncode = p1.returncode
         elif ast[0] == 'derefmultipipe':
             pass
         elif ast[0] == 'pipedcommand':
-            pass
+            treepointer = ast[2]
+            p1 = self.basecommand(treepointer[1])
+            # we have a tree of simple commands to evaluate
+            while treepointer[0] == 'pipedcommand':
+                p1 = self.basecommand(treepointer[1], p1.stdout)
+                treepointer = treepointer[2]
         elif ast[0] == 'multicommmand':
             pass
         # None (from trailing semicolon)
         elif ast[0] is None:
             pass
+        else:
+            raise UnknownTreeException
+
         if not p1 is None:
             p1.wait()
-        return 0
+        return returncode
+
+    def basecommand(self, tree, stdin=None):
+        proc = Popen(self.flattentree(tree[1]), stdin=stdin,
+                     stdout=subprocess.PIPE)
+        return proc
+
+    def flattentree(self, tree):
+        # return a list of strings from a tree
+        # handles string, values, variable trees
+        if tree[0] == 'string':
+            return [tree[1]]
+        elif tree[0] == 'values':
+            return self.flattentree(tree[1])+self.flattentree(tree[2])
+        elif tree[0] == 'variable':
+            return [self.variables[tree[1][1:]]]
+        else:
+            raise InvalidTreeException
 
     def pipedcmd(self, line, pipein):
         cmd, arg, line = self.parseline(line)
@@ -142,6 +169,8 @@ class Droplet:
             raise TypeError
     def __eq__(self, other):
         return self.entries == other.entries
+    def __repr__(self):
+        return self.entries.__repr__()
 
 # helper functions:
 def parse(ooshstring):
