@@ -33,20 +33,29 @@ class Oosh(Cmd):
     def eval(self, ast):
         if ast is None:
             print('Evaluated empty tree')
-            return
+            return 0
 
-        p1 = None
+        runningprocesses = []
         returncode = 0
         # sadly no case or pattern matching in python
         if ast[0] == 'sequence':
             self.eval(ast[1])
-            self.eval(ast[2])
+            return self.eval(ast[2])
         elif ast[0] == 'savepipe':
-            pass
+            # todo: need to save data
+            return self.eval(ast[2])
         elif ast[0] == 'for':
-            pass
+            oldvariables = variables.copy()
+            for value in self.flattentree(ast[2]):
+                variables[ast[1]] = value
+                returncode = eval(ast[3])
+            variables = oldvariables
+            return returncode
         elif ast[0] == 'while':
-            pass
+            while returncode == 0:
+                returncode = eval(ast[1])
+                eval(ast[2])
+            return returncode
         elif ast[0] == 'if':
             if self.eval(ast[1]) == 0: # 0 is true for shells
                 self.eval(ast[2])
@@ -62,8 +71,9 @@ class Oosh(Cmd):
         elif ast[0] == 'multicommand':
             pass
         elif ast[0] == 'simplecommand':
-            p1 = Popen(self.flattentree(ast[1]))
-            returncode = p1.returncode
+            process = Popen(self.flattentree(ast[1]))
+            returncode = process.returncode
+            runningprocesses.append(process)
         elif ast[0] == 'derefmultipipe':
             pass
         elif ast[0] == 'pipedcommand':
@@ -73,16 +83,14 @@ class Oosh(Cmd):
             while treepointer[0] == 'pipedcommand':
                 p1 = self.basecommand(treepointer[1], p1.stdout)
                 treepointer = treepointer[2]
-        elif ast[0] == 'multicommmand':
-            pass
         # None (from trailing semicolon)
         elif ast[0] is None:
             pass
         else:
             raise UnknownTreeException
 
-        if not p1 is None:
-            p1.wait()
+        for process in runningprocesses:
+            process.wait()
         return returncode
 
     def basecommand(self, tree, stdin=None):
@@ -169,8 +177,6 @@ class Droplet:
             raise TypeError
     def __eq__(self, other):
         return self.entries == other.entries
-    def __repr__(self):
-        return self.entries.__repr__()
 
 # helper functions:
 def parse(ooshstring):
@@ -180,7 +186,7 @@ def parse(ooshstring):
                              flags=re.DOTALL)
     # strip leading and trailng "
     stripped = [s[1:][:-1] for s in keyandvalue]
-    # separate into column name, value pairs
+     # separate into column name, value pairs
     pairs = [s.split('":"') for s in stripped]
     return dict(pairs)
 
