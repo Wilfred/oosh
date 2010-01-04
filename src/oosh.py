@@ -19,8 +19,10 @@ from subprocess import Popen # spawn processes
 import subprocess
 
 class Oosh(Cmd):
-    savedpipes = {}
-    variables = {}
+    def __init__(self):
+        Cmd.__init__(self)
+        self.savedpipes = {}
+        self.variables = {}
 
     def onecmd(self, line):
         if line.strip(' \t\n') == '':
@@ -45,16 +47,16 @@ class Oosh(Cmd):
             # todo: need to save data
             return self.eval(ast[2])
         elif ast[0] == 'for':
-            oldvariables = variables.copy()
+            oldvariables = self.variables.copy()
             for value in self.flattentree(ast[2]):
-                variables[ast[1]] = value
-                returncode = eval(ast[3])
-            variables = oldvariables
+                self.variables[ast[1]] = value
+                returncode = self.eval(ast[3])
+            self.variables = oldvariables
             return returncode
         elif ast[0] == 'while':
             while returncode == 0:
-                returncode = eval(ast[1])
-                eval(ast[2])
+                returncode = self.eval(ast[1])
+                self.eval(ast[2])
             return returncode
         elif ast[0] == 'if':
             if self.eval(ast[1]) == 0: # 0 is true for shells
@@ -71,20 +73,32 @@ class Oosh(Cmd):
         elif ast[0] == 'multicommand':
             pass
         elif ast[0] == 'simplecommand':
-            process = Popen(self.flattentree(ast[1]))
+            process = self.basecommand(ast, None, True)
             returncode = process.returncode
             runningprocesses.append(process)
         elif ast[0] == 'derefmultipipe':
             pass
         elif ast[0] == 'pipedcommand':
-            treepointer = ast[2]
-            p1 = self.basecommand(treepointer[1])
+            treepointer = ast
+            firsttime = True
             # we have a tree of simple commands to evaluate
             while treepointer[0] == 'pipedcommand':
-                p1 = self.basecommand(treepointer[1], p1.stdout)
+                if firsttime:
+                    proc = self.basecommand(treepointer[1], None)
+                else:
+                    proc = self.basecommand(treepointer[1], proc.stdout)
                 treepointer = treepointer[2]
-        # None (from trailing semicolon)
-        elif ast[0] is None:
+                runningprocesses.append(proc)
+                firsttime = False
+
+            if firsttime:
+                proc = self.basecommand(treepointer, None, True)
+            else:
+                proc = self.basecommand(treepointer, proc.stdout, True)
+            runningprocesses.append(proc)
+            returncode = proc.returncode
+
+        elif ast[0] is None: # occurs with trailing ;
             pass
         else:
             raise UnknownTreeException
@@ -93,9 +107,12 @@ class Oosh(Cmd):
             process.wait()
         return returncode
 
-    def basecommand(self, tree, stdin=None):
-        proc = Popen(self.flattentree(tree[1]), stdin=stdin,
-                     stdout=subprocess.PIPE)
+    def basecommand(self, tree, stdin, isend=False):
+        if isend:
+            proc = Popen(self.flattentree(tree[1]), stdin=stdin)
+        else:
+            proc = Popen(self.flattentree(tree[1]), stdin=stdin,
+                         stdout=subprocess.PIPE)
         return proc
 
     def flattentree(self, tree):
