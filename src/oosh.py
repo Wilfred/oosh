@@ -11,9 +11,6 @@ import re
 import copy
 
 from ooshparse import parser
-# current location of oosh programs:
-# todo: create /usr/bin equivalent
-# import programs
 
 from subprocess import Popen # spawn processes
 import subprocess
@@ -84,17 +81,18 @@ class Oosh(Cmd):
             # we have a tree of simple commands to evaluate
             while treepointer[0] == 'pipedcommand':
                 if firsttime:
-                    proc = self.basecommand(treepointer[1], None)
+                    proc = self.basecommand(treepointer[1], None, subprocess.PIPE)
                 else:
-                    proc = self.basecommand(treepointer[1], proc.stdout)
+                    proc = self.basecommand(treepointer[1],
+                                            proc.stdout, subprocess.PIPE)
                 treepointer = treepointer[2]
                 runningprocesses.append(proc)
                 firsttime = False
 
             if firsttime:
-                proc = self.basecommand(treepointer, None, True)
+                proc = self.basecommand(treepointer, None, None)
             else:
-                proc = self.basecommand(treepointer, proc.stdout, True)
+                proc = self.basecommand(treepointer, proc.stdout, None)
             runningprocesses.append(proc)
             returncode = proc.returncode
 
@@ -107,12 +105,8 @@ class Oosh(Cmd):
             process.wait()
         return returncode
 
-    def basecommand(self, tree, stdin, isend=False):
-        if isend:
-            proc = Popen(self.flattentree(tree[1]), stdin=stdin)
-        else:
-            proc = Popen(self.flattentree(tree[1]), stdin=stdin,
-                         stdout=subprocess.PIPE)
+    def basecommand(self, tree, stdin, stdout):
+        proc = Popen(self.flattentree(tree[1]), stdin=stdin, stdout=stdout)
         return proc
 
     def flattentree(self, tree):
@@ -194,6 +188,8 @@ class Droplet:
             raise TypeError
     def __eq__(self, other):
         return self.entries == other.entries
+    def __repr__(self):
+        return self.entries.__repr__()
 
 # helper functions:
 def parse(ooshstring):
