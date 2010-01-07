@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/Usr/bin/python3
 
 # default python interpreter facilities
 # source is in /usr/lib/python3.1/cmd.py
@@ -6,7 +6,7 @@ from cmd import Cmd
 # use the python history facilities
 # we will modify this later for object caching alongside
 import readline
-# regular expressions
+# regular expressionsp
 import re
 import copy
 
@@ -18,7 +18,7 @@ import subprocess
 class Oosh(Cmd):
     def __init__(self):
         Cmd.__init__(self)
-        self.savedpipes = {}
+        self.saved_pipes = {}
         self.variables = {}
 
     def onecmd(self, line):
@@ -34,28 +34,28 @@ class Oosh(Cmd):
             print('Evaluated empty tree')
             return (None, 0)
 
-        returncode = 0
+        return_code = 0
         # sadly no case or pattern matching in python
         if ast[0] == 'sequence':
             self.eval(ast[1])
             return self.eval(ast[2])
         elif ast[0] == 'savepipe':
-            (stdout, returncode) = self.eval(ast[1])
+            (stdout, return_code) = self.eval(ast[1])
             pipe_number = ast[2][1:]
-            self.savedpipes[pipe_number] = stdout
-            return (None, returncode)
+            self.saved_pipes[pipe_number] = stdout
+            return (None, return_code)
         elif ast[0] == 'for':
-            oldvariables = self.variables.copy()
-            for value in self.flattentree(ast[2]):
+            old_variables = self.variables.copy()
+            for value in self.flatten_tree(ast[2]):
                 self.variables[ast[1]] = value
-                (stdout, returncode) = self.eval(ast[3])
-            self.variables = oldvariables
-            return (None, returncode)
+                (stdout, return_code) = self.eval(ast[3])
+            self.variables = old_variables
+            return (None, return_code)
         elif ast[0] == 'while':
-            while returncode == 0:
-                (stdout, returncode) = self.eval(ast[1])
+            while return_code == 0:
+                (stdout, return_code) = self.eval(ast[1])
                 self.eval(ast[2])
-            return (None, returncode)
+            return (None, return_code)
         elif ast[0] == 'if':
             if self.eval(ast[1]) == 0: # 0 is true for shells
                 return self.eval(ast[2])
@@ -67,66 +67,66 @@ class Oosh(Cmd):
             else:
                 return self.eval(ast[3])
         elif ast[0] == 'assign':
-            self.variables[ast[1]] = self.flattentree(ast[2])[0]
+            self.variables[ast[1]] = self.flatten_tree(ast[2])[0]
             return (None, 0)
         elif ast[0] == 'derefpipe':
             pass
         elif ast[0] == 'multicommand':
             pass
         elif ast[0] == 'simplecommand':
-            process = self.basecommand(ast, None)
+            process = self.base_command(ast, None)
             process.wait()
-            returncode = process.returncode
+            return_code = process.return_code
             stdout = process.stdout.read()
             print(stdout.decode()) # decode binary data
-            return (stdout, returncode)
+            return (stdout, return_code)
         elif ast[0] == 'derefmultipipe':
             pass
         elif ast[0] == 'pipedcommand':
-            runningprocesses = []
+            running_processes = []
 
             treepointer = ast
             firsttime = True
             # we have a tree of simple commands to evaluate
             while treepointer[0] == 'pipedcommand':
                 if firsttime:
-                    process = self.basecommand(treepointer[1], None)
+                    process = self.base_command(treepointer[1], None)
                 else:
-                    process = self.basecommand(treepointer[1], process.stdout)
+                    process = self.base_command(treepointer[1], process.stdout)
                 treepointer = treepointer[2]
-                runningprocesses.append(process)
+                running_processes.append(process)
                 firsttime = False
 
             if firsttime:
-                process = self.basecommand(treepointer, None)
+                process = self.base_command(treepointer, None)
             else:
-                process = self.basecommand(treepointer, process.stdout)
+                process = self.base_command(treepointer, process.stdout)
 
-            runningprocesses.append(process)
-            for process in runningprocesses:
+            running_processes.append(process)
+            for process in running_processes:
                 process.wait()
 
-            returncode = process.returncode
+            return_code = process.return_code
             stdout = process.stdout.read()
             print(stdout.decode()) # decode binary data
-            return (stdout, returncode)
+            return (stdout, return_code)
         elif ast[0] is None: # occurs with trailing ;
             pass
         else:
             raise UnknownTreeException
 
-    def basecommand(self, tree, stdin):
-        process = Popen(self.flattentree(tree[1]), stdin=stdin,
+    def base_command(self, tree, stdin):
+        process = Popen(self.flatten_tree(tree[1]), stdin=stdin,
                         stdout=subprocess.PIPE)
         return process
 
-    def flattentree(self, tree):
+    def flatten_tree(self, tree):
         # return a list of strings from a tree
         # handles string, values, variable trees
         if tree[0] == 'string':
             return [tree[1]]
         elif tree[0] == 'values':
-            return self.flattentree(tree[1])+self.flattentree(tree[2])
+            return self.flatten_tree(tree[1])+self.flatten_tree(tree[2])
         elif tree[0] == 'variable':
             return [self.variables[tree[1][1:]]]
         else:
@@ -149,7 +149,7 @@ class Oosh(Cmd):
     def multipipedcmd(self, line, pipes):
         # do multi pipe to start
         try:
-            multipipe = [copy.deepcopy(self.savedpipes[name]) for name in pipes]
+            multipipe = [copy.deepcopy(self.saved_pipes[name]) for name in pipes]
             cmd, arg, line = self.parseline(line)
             func = getattr(programs, 'do_multi_' + cmd)
         except AttributeError:
