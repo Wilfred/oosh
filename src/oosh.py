@@ -1,4 +1,4 @@
-#!/Usr/bin/python3
+#!/usr/bin/python3
 
 # default python interpreter facilities
 # source is in /usr/lib/python3.1/cmd.py
@@ -27,9 +27,15 @@ class Oosh(Cmd):
         print("Input: ", line)
         ast = parser.parse(line)
         print("AST: ", ast)
-        self.eval(ast)
+        (stdout, return_code) = self.eval(ast, None)
+        self.print_pipe(stdout)
 
-    def eval(self, ast):
+    def print_pipe(self, pipe_pointer):
+        # read and decode binary data in stdout
+        if not pipe_pointer is None:
+            print(pipe_pointer.read().decode())
+
+    def eval(self, ast, pipe_pointer):
         if ast is None:
             print('Evaluated empty tree')
             return (None, 0)
@@ -37,81 +43,70 @@ class Oosh(Cmd):
         return_code = 0
         # sadly no case or pattern matching in python
         if ast[0] == 'sequence':
-            self.eval(ast[1])
-            return self.eval(ast[2])
+            self.eval(ast[1], None)
+            return self.eval(ast[2], None)
+
         elif ast[0] == 'savepipe':
-            (stdout, return_code) = self.eval(ast[1])
+            (pipe_out, return_code) = self.eval(ast[1], None)
             pipe_number = ast[2][1:]
-            self.saved_pipes[pipe_number] = stdout
+            self.saved_pipes[pipe_number] = pipe_out
             return (None, return_code)
+
         elif ast[0] == 'for':
             old_variables = self.variables.copy()
-            for value in self.flatten_tree(ast[2]):
+            for value in self.flatten_tree(ast[2], None):
                 self.variables[ast[1]] = value
-                (stdout, return_code) = self.eval(ast[3])
+                (stdout, return_code) = self.eval(ast[3], None)
+                self.print_pipe(stdout)
             self.variables = old_variables
             return (None, return_code)
+
         elif ast[0] == 'while':
             while return_code == 0:
-                (stdout, return_code) = self.eval(ast[1])
-                self.eval(ast[2])
-            return (None, return_code)
+                (dont_care, return_code) = self.eval(ast[1])
+                (stdout, final_return_code) = self.eval(ast[2])
+                self.print_pipe(stdout)
+            return (None, final_return_code)
+
         elif ast[0] == 'if':
-            if self.eval(ast[1]) == 0: # 0 is true for shells
-                return self.eval(ast[2])
+            if self.eval(ast[1], None) == 0: # 0 is true for shells
+                return self.eval(ast[2], None)
             else:
-                return 0
+                return (None, 0)
+
         elif ast[0] == 'if-else':
-            if self.eval(ast[1]) == 0:
-                return self.eval(ast[2])
+            if self.eval(ast[1], None) == 0:
+                return self.eval(ast[2], None)
             else:
-                return self.eval(ast[3])
+                return self.eval(ast[3], None)
+
         elif ast[0] == 'assign':
             self.variables[ast[1]] = self.flatten_tree(ast[2])[0]
             return (None, 0)
+
         elif ast[0] == 'derefpipe':
-            pass
+            pipe_name = ast[1][1:]
+            return self.eval(ast[2], self.saved_pipes[pipe_name])
+
         elif ast[0] == 'multicommand':
             pass
+
         elif ast[0] == 'simplecommand':
-            process = self.base_command(ast, None)
+            print("self.saved_pipes is: ", self.saved_pipes)
+            process = self.base_command(ast, pipe_pointer)
             process.wait()
-            return_code = process.return_code
-            stdout = process.stdout.read()
-            print(stdout.decode()) # decode binary data
-            return (stdout, return_code)
+            return (process.stdout, process.returncode)
+
         elif ast[0] == 'derefmultipipe':
             pass
+
         elif ast[0] == 'pipedcommand':
-            running_processes = []
+            (stdout, return_code) = self.eval(ast[1], pipe_pointer)
+            return self.eval(ast[2], stdout)
 
-            treepointer = ast
-            firsttime = True
-            # we have a tree of simple commands to evaluate
-            while treepointer[0] == 'pipedcommand':
-                if firsttime:
-                    process = self.base_command(treepointer[1], None)
-                else:
-                    process = self.base_command(treepointer[1], process.stdout)
-                treepointer = treepointer[2]
-                running_processes.append(process)
-                firsttime = False
-
-            if firsttime:
-                process = self.base_command(treepointer, None)
-            else:
-                process = self.base_command(treepointer, process.stdout)
-
-            running_processes.append(process)
-            for process in running_processes:
-                process.wait()
-
-            return_code = process.return_code
-            stdout = process.stdout.read()
-            print(stdout.decode()) # decode binary data
-            return (stdout, return_code)
         elif ast[0] is None: # occurs with trailing ;
             pass
+
         else:
             raise UnknownTreeException
 
