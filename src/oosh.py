@@ -40,8 +40,6 @@ class Oosh(Cmd):
             print('Evaluated empty tree')
             return (None, 0)
 
-        return_code = 0
-        # sadly no case or pattern matching in python
         if ast[0] == 'sequence':
             self.eval(ast[1], None)
             return self.eval(ast[2], None)
@@ -54,7 +52,7 @@ class Oosh(Cmd):
 
         elif ast[0] == 'for':
             old_variables = self.variables.copy()
-            for value in self.flatten_tree(ast[2], None):
+            for value in self.flatten_tree(ast[2]):
                 self.variables[ast[1]] = value
                 (stdout, return_code) = self.eval(ast[3], None)
                 self.print_pipe(stdout)
@@ -88,17 +86,21 @@ class Oosh(Cmd):
             pipe_name = ast[1][1:]
             return self.eval(ast[2], self.saved_pipes[pipe_name])
 
-        elif ast[0] == 'multicommand':
-            pass
-
         elif ast[0] == 'simplecommand':
-            print("self.saved_pipes is: ", self.saved_pipes)
             process = self.base_command(ast, pipe_pointer)
             process.wait()
             return (process.stdout, process.returncode)
 
         elif ast[0] == 'derefmultipipe':
-            pass
+            # call command, appending argument of second pipe
+            pipe_names = ast[1][1:].split('+')
+            second_pipe_pointer = self.saved_pipes[pipe_names[1]]
+            command = self.flatten_tree(ast[2][1])
+            command += ' ' + str(second_pipe_pointer.fileno())
+            process = Popen(command,
+                            stdin=self.saved_pipes[pipe_names[0]],
+                            stdout=subprocess.PIPE)
+            return (process.stdout, process.returncode)
 
         elif ast[0] == 'pipedcommand':
             (stdout, return_code) = self.eval(ast[1], pipe_pointer)
@@ -111,8 +113,8 @@ class Oosh(Cmd):
             raise UnknownTreeException
 
     def base_command(self, tree, stdin):
-        process = Popen(self.flatten_tree(tree[1]), stdin=stdin,
-                        stdout=subprocess.PIPE)
+        command = self.flatten_tree(tree[1])
+        process = Popen(command, stdin=stdin, stdout=subprocess.PIPE)
         return process
 
     def flatten_tree(self, tree):
