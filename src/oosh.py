@@ -24,7 +24,6 @@ class Oosh(Cmd):
     def onecmd(self, line):
         if line.strip(' \t\n') == '':
             return
-        print("Input: ", line)
         ast = parser.parse(line)
         print("AST: ", ast)
         (stdout, return_code) = self.eval(ast, None)
