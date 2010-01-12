@@ -3,12 +3,9 @@
 # default python interpreter facilities
 # source is in /usr/lib/python3.1/cmd.py
 from cmd import Cmd
-# use the python history facilities
-# we will modify this later for object caching alongside
-import readline
-# regular expressionsp
-import re
-import copy
+import readline # use the python history facilities
+import re # regular expressions
+import sys
 
 from ooshparse import parser
 
@@ -40,7 +37,8 @@ class Oosh(Cmd):
             return (None, 0)
 
         if ast[0] == 'sequence':
-            self.eval(ast[1], None)
+            (stdout, returncode) = self.eval(ast[1], None)
+            self.print_pipe(stdout)
             return self.eval(ast[2], None)
 
         elif ast[0] == 'savepipe':
@@ -113,6 +111,15 @@ class Oosh(Cmd):
 
     def base_command(self, tree, stdin):
         command = self.flatten_tree(tree[1])
+        command_name = command[0]
+        if command_name == 'exit':
+            sys.exit()
+        if not re.match('oosh_*', command_name) is None:
+            if command_name == 'oosh_graph':
+                # graph uses pycairo, which is not py3k compatible
+                command = ['python'] + [command_name + '.py'] + command[1:]
+            else:
+                command = ['python3'] + [command_name + '.py'] + command[1:]
         process = Popen(command, stdin=stdin, stdout=subprocess.PIPE)
         return process
 
