@@ -23,8 +23,11 @@ class Oosh(Cmd):
             return
         ast = parser.parse(line)
         print("AST: ", ast)
-        (stdout, return_code) = self.eval(ast, None)
-        self.print_pipe(stdout)
+        try:
+            (stdout, return_code) = self.eval(ast, None)
+            self.print_pipe(stdout)
+        except OSError:
+            return
 
     def print_pipe(self, pipe_pointer):
         # read and decode binary data in stdout
@@ -84,9 +87,14 @@ class Oosh(Cmd):
             return self.eval(ast[2], self.saved_pipes[pipe_name])
 
         elif ast[0] == 'simplecommand':
-            process = self.base_command(ast, pipe_pointer)
-            process.wait()
-            return (process.stdout, process.returncode)
+            try:
+                process = self.base_command(ast, pipe_pointer)
+                process.wait()
+                return (process.stdout, process.returncode)
+            except OSError:
+                command_name = ast[1][1]
+                print("No such command:",command_name)
+                raise OSError
 
         elif ast[0] == 'derefmultipipe':
             # call command, appending argument of second pipe
