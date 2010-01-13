@@ -69,7 +69,8 @@ def p_values(p):
 
 def p_value(p):
     '''value : STRING
-             | VARIABLE'''
+             | VARIABLE
+             | QUOTEDSTRING'''
     if p[1][0] == '$':
         p[0] = ('variable', p[1])
     else:

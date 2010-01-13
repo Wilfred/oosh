@@ -14,7 +14,7 @@ reserved = {
 
 # remaining token names
 tokens = ['PIPE', 'NAMEDPIPE', 'MULTIPIPE', 'VARIABLE',
-          'STRING', 'SEMICOLON'] + list(reserved.values())
+          'STRING', 'QUOTEDSTRING', 'SEMICOLON'] + list(reserved.values())
 
 # regex for simple tokens (do we want case sensitivity?)
 t_SEMICOLON = r';'
@@ -34,6 +34,10 @@ def t_error(t):
 def t_STRING(t): # any command name or argument
     r'[a-zA-Z0-9.\-/_]+'
     t.type = reserved.get(t.value,'STRING') # check for reserved words
+    return t
+def t_QUOTEDSTRING(t): # any argument of the form 'xyz % !'
+    r'\'[a-zA-Z0-9 !%]*?\''
+    t.value = t.value[1:-1] # strip leading and trailing '
     return t
 
 lexer = lex.lex()
