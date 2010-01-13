@@ -32,7 +32,48 @@ class Oosh(Cmd):
     def print_pipe(self, pipe_pointer):
         # read and decode binary data in stdout
         if not pipe_pointer is None:
-            print(pipe_pointer.read().decode())
+            content = pipe_pointer.read().decode()
+            if content[0] == '{': # data conforms to oosh structure
+                self.pretty_print(content)
+            else:
+                print(content)
+
+    def pretty_print(self, content):
+        string_lines = content.splitlines()
+        lines = [eval(v) for v in string_lines[:-1]]
+
+        header = []
+        for line in lines:
+            for key in line.keys():
+                if key not in header:
+                    header.append(key)
+
+        # get optimum width:
+        column_widths = {}
+        for string in header:
+            column_widths[string] = (len(string))
+        for line in lines:
+            for key in header:
+                try:
+                    value = str(line[key])
+                    if len(value) > column_widths[key]:
+                        column_widths[key] = len(value)
+                except KeyError:
+                    pass
+
+        # print header
+        header_text = ''
+        for key in header:
+            # print string plus requisite number of spaces
+            header_text += key + ' '*(column_widths[key]-len(key)+1)
+        print(header_text)
+            
+        for line in lines:
+            line_text = ''
+            for key in header:
+                datum = str(line[key])
+                line_text += datum + ' '*(column_widths[key]-len(datum)+1)
+            print(line_text)
 
     def eval(self, ast, pipe_pointer):
         if ast is None:
