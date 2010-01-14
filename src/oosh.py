@@ -15,7 +15,7 @@ import subprocess
 class Oosh(Cmd):
     def __init__(self):
         Cmd.__init__(self)
-        self.saved_pipes = {}
+        self.saved_pipe_data = {}
         self.variables = {}
 
     def onecmd(self, line):
@@ -79,20 +79,24 @@ class Oosh(Cmd):
                 line_text += datum + ' '*(column_widths[key]-len(datum)+1)
             print(line_text)
 
-    def eval(self, ast, pipe_pointer):
+    def eval(self, ast, pipe_pointer, start_data=None):
+        # recurse down tree, starting processes and passing pointers
+        # of pipes created as appopriate. We also pass start_data to
+        # simplecommand, sequence and pipedcommand from pipe dereferencing
+        
         if ast is None:
             print('Evaluated empty tree')
             return (None, 0)
 
         if ast[0] == 'sequence':
-            (stdout, returncode) = self.eval(ast[1], None)
+            (stdout, returncode) = self.eval(ast[1], None, start_data)
             self.print_pipe(stdout)
             return self.eval(ast[2], None)
 
         elif ast[0] == 'savepipe':
-            (pipe_out, return_code) = self.eval(ast[1], None)
+            (pipe_out, return_code) = self.eval(ast[1], None, start_data)
             pipe_number = ast[2][1:]
-            self.saved_pipes[pipe_number] = pipe_out
+            self.saved_pipe_data[pipe_number] = pipe_out.read()
             return (None, return_code)
 
         elif ast[0] == 'for':
@@ -106,8 +110,8 @@ class Oosh(Cmd):
 
         elif ast[0] == 'while':
             while return_code == 0:
-                (dont_care, return_code) = self.eval(ast[1])
-                (stdout, final_return_code) = self.eval(ast[2])
+                (dont_care, return_code) = self.eval(ast[1], None)
+                (stdout, final_return_code) = self.eval(ast[2], None)
                 self.print_pipe(stdout)
             return (None, final_return_code)
 
@@ -128,32 +132,47 @@ class Oosh(Cmd):
             return (None, 0)
 
         elif ast[0] == 'derefpipe':
-            pipe_name = ast[1][1:]
-            return self.eval(ast[2], self.saved_pipes[pipe_name])
+            old_pipe_name = ast[1][1:] # e.g. |2
+            old_pipe_data = self.saved_pipe_data[old_pipe_name]
+            return self.eval(ast[2], subprocess.PIPE, old_pipe_data)
 
         elif ast[0] == 'simplecommand':
-            try:
-                process = self.base_command(ast, pipe_pointer)
-                process.wait()
-                return (process.stdout, process.returncode)
-            except OSError:
-                command_name = ast[1][1]
-                print("No such command:",command_name)
-                raise OSError
+            process = self.base_command(ast, pipe_pointer)
+            if not start_data is None:
+                process.stdin.write(start_data)
+                process.stdin.close()
+            process.wait()
+            return (process.stdout, process.returncode)
 
         elif ast[0] == 'derefmultipipe':
-            # call command, appending argument of second pipe
+            # this is not nice code, we use cat just to create a new
+            # pipe (cf 'useless use of cat')
+            
             pipe_names = ast[1][1:].split('+')
-            second_pipe_pointer = self.saved_pipes[pipe_names[1]]
+
+            first_pipe_data = self.saved_pipe_data[pipe_names[0]]
+            first_process = Popen('cat', stdin=subprocess.PIPE,
+                                  stdout=subprocess.PIPE)
+            first_process.stdin.write(first_pipe_data)
+            first_process.stdin.close()
+
+            second_pipe_data = self.saved_pipe_data[pipe_names[1]]
+            second_process = Popen('cat', stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE)
+            second_process.stdin.write(second_pipe_data)
+            second_process.stdin.close()
+
+            # we call command, appending argument of second pipe
             command = self.flatten_tree(ast[2][1])
-            command += ' ' + str(second_pipe_pointer.fileno())
-            process = Popen(command,
-                            stdin=self.saved_pipes[pipe_names[0]],
-                            stdout=subprocess.PIPE)
+            command += ' ' + str(second_process.stdout.fileno())
+            
+            process = self.shell_command(' '.join(command),
+                                         first_process.stdout)
+            process.wait()
             return (process.stdout, process.returncode)
 
         elif ast[0] == 'pipedcommand':
-            (stdout, return_code) = self.eval(ast[1], pipe_pointer)
+            (stdout, return_code) = self.eval(ast[1], pipe_pointer, start_data)
             return self.eval(ast[2], stdout)
 
         elif ast[0] is None: # occurs with trailing ;
@@ -163,7 +182,11 @@ class Oosh(Cmd):
             raise UnknownTreeException
 
     def base_command(self, tree, stdin):
-        command = self.flatten_tree(tree[1])
+        command = ' '.join(self.flatten_tree(tree[1]))
+        return self.shell_command(command, stdin)
+
+    def shell_command(self, command_string, stdin):
+        command = command_string.split(' ')
         command_name = command[0]
         if command_name == 'exit':
             sys.exit()
@@ -173,8 +196,12 @@ class Oosh(Cmd):
                 command = ['python'] + [command_name + '.py'] + command[1:]
             else:
                 command = ['python3'] + [command_name + '.py'] + command[1:]
-        process = Popen(command, stdin=stdin, stdout=subprocess.PIPE)
-        return process
+        try:
+            process = Popen(command, stdin=stdin, stdout=subprocess.PIPE)
+            return process
+        except OSError:
+            print("No such command: ", command_name)
+            raise OSError
 
     def flatten_tree(self, tree):
         # return a list of strings from a tree
