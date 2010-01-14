@@ -33,14 +33,18 @@ class Oosh(Cmd):
         # read and decode binary data in stdout
         if not pipe_pointer is None:
             content = pipe_pointer.read().decode()
-            if content[0] == '{': # data conforms to oosh structure
+            if len(content) > 0 and content[0] == '{': 
+                # data conforms to oosh structure
                 self.pretty_print(content)
             else:
                 print(content)
 
     def pretty_print(self, content):
         string_lines = content.splitlines()
-        lines = [eval(v) for v in string_lines]
+        lines = []
+        for line in string_lines:
+            if not line == '':
+                lines.append(eval(line))
 
         header = []
         for line in lines:
