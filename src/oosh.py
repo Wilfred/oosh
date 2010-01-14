@@ -40,7 +40,7 @@ class Oosh(Cmd):
 
     def pretty_print(self, content):
         string_lines = content.splitlines()
-        lines = [eval(v) for v in string_lines[:-1]]
+        lines = [eval(v) for v in string_lines]
 
         header = []
         for line in lines:
@@ -211,29 +211,6 @@ def parse(ooshstring):
      # separate into column name, value pairs
     pairs = [s.split('":"') for s in stripped]
     return dict(pairs)
-
-def printstream(droplets):
-    # todo: fix since it assumes all droplet entries are only strings
-    if len(droplets) == 0:
-        return
-
-    # print header
-    columns = []
-    for droplet in droplets:
-        for key in droplet.entries:
-            if key not in columns:
-                columns.append(key)
-    print("\t".join(columns))
-
-    # print rows
-    for droplet in droplets:
-        row = []
-        for column in columns:
-            if column not in droplet.entries:
-                row.append('')
-            else:
-                row.append(str(droplet.entries[column]))
-        print("\t".join(row))
 
 if __name__=='__main__':
     oosh = Oosh()
