@@ -9,7 +9,6 @@ import sys
 
 from ooshparse import parser
 
-from subprocess import Popen # spawn processes
 import subprocess
 
 class Oosh(Cmd):
@@ -79,7 +78,7 @@ class Oosh(Cmd):
                 line_text += datum + ' '*(column_widths[key]-len(datum)+1)
             print(line_text)
 
-    def eval(self, ast, pipe_pointer, start_data=None):
+    def eval(self, ast, pipe_pointer):
         # recurse down tree, starting processes and passing pointers
         # of pipes created as appopriate. We also pass start_data to
         # simplecommand, sequence and pipedcommand from pipe dereferencing
@@ -94,7 +93,7 @@ class Oosh(Cmd):
             return self.eval(ast[2], None)
 
         elif ast[0] == 'savepipe':
-            (pipe_out, return_code) = self.eval(ast[1], None, start_data)
+            (pipe_out, return_code) = self.eval(ast[1], None)
             pipe_number = ast[2][1:]
             self.saved_pipe_data[pipe_number] = pipe_out.read()
             return (None, return_code)
@@ -132,47 +131,39 @@ class Oosh(Cmd):
             return (None, 0)
 
         elif ast[0] == 'derefpipe':
+            # create a process to give us a stdout to pass
+            # to whatever is next in the pipeline
             old_pipe_name = ast[1][1:] # e.g. |2
             old_pipe_data = self.saved_pipe_data[old_pipe_name]
-            return self.eval(ast[2], subprocess.PIPE, old_pipe_data)
+            old_pipe_pointer = self.pipe_from_data(old_pipe_data)
+
+            return self.eval(ast[2], old_pipe_pointer)
 
         elif ast[0] == 'simplecommand':
-            process = self.base_command(ast, pipe_pointer)
-            if not start_data is None:
-                process.stdin.write(start_data)
-                process.stdin.close()
+            command = ' '.join(self.flatten_tree(ast[1]))
+            process = self.shell_command(command, pipe_pointer)
             process.wait()
             return (process.stdout, process.returncode)
 
         elif ast[0] == 'derefmultipipe':
-            # this is not nice code, we use cat just to create a new
-            # pipe (cf 'useless use of cat')
-            
             pipe_names = ast[1][1:].split('+')
 
             first_pipe_data = self.saved_pipe_data[pipe_names[0]]
-            first_process = Popen('cat', stdin=subprocess.PIPE,
-                                  stdout=subprocess.PIPE)
-            first_process.stdin.write(first_pipe_data)
-            first_process.stdin.close()
+            first_pipe_pointer = self.pipe_from_data(first_pipe_data)
 
             second_pipe_data = self.saved_pipe_data[pipe_names[1]]
-            second_process = Popen('cat', stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE)
-            second_process.stdin.write(second_pipe_data)
-            second_process.stdin.close()
+            second_pipe_pointer = self.pipe_from_data(second_pipe_data)
 
             # we call command, appending argument of second pipe
             command = self.flatten_tree(ast[2][1])
-            command += ' ' + str(second_process.stdout.fileno())
+            command += ' ' + str(second_pipe_pointer.fileno())
             
-            process = self.shell_command(' '.join(command),
-                                         first_process.stdout)
+            process = self.shell_command(' '.join(command), first_pipe_pointer)
             process.wait()
             return (process.stdout, process.returncode)
 
         elif ast[0] == 'pipedcommand':
-            (stdout, return_code) = self.eval(ast[1], pipe_pointer, start_data)
+            (stdout, return_code) = self.eval(ast[1], pipe_pointer)
             return self.eval(ast[2], stdout)
 
         elif ast[0] is None: # occurs with trailing ;
@@ -181,9 +172,16 @@ class Oosh(Cmd):
         else:
             raise UnknownTreeException
 
-    def base_command(self, tree, stdin):
-        command = ' '.join(self.flatten_tree(tree[1]))
-        return self.shell_command(command, stdin)
+    def pipe_from_data(self, pipe_data):
+        # this is not beautiful code, we use cat just to create a new
+        # pipe (cf 'useless use of cat')
+        process = subprocess.Popen('cat', stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE)
+        process.stdin.write(pipe_data)
+        process.stdin.close()
+        process.wait()
+        return process.stdout
+
 
     def shell_command(self, command_string, stdin):
         command = command_string.split(' ')
@@ -197,7 +195,7 @@ class Oosh(Cmd):
             else:
                 command = ['python3'] + [command_name + '.py'] + command[1:]
         try:
-            process = Popen(command, stdin=stdin, stdout=subprocess.PIPE)
+            process = subprocess.Popen(command, stdin=stdin, stdout=subprocess.PIPE)
             return process
         except OSError:
             print("No such command: ", command_name)

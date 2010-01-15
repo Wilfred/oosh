@@ -6,7 +6,7 @@ import pwd
 args = sys.argv[1:]
 
 if len(args) == 0:
-    dir = "."
+    dir = os.getcwd()
 else:
     dir = args[0]
 
