@@ -11,6 +11,10 @@ from ooshparse import parser
 
 import subprocess
 
+class OoshError(Exception):
+    def __init__(self, message):
+        self.message = message
+
 class Oosh(Cmd):
     def __init__(self):
         Cmd.__init__(self)
@@ -25,7 +29,8 @@ class Oosh(Cmd):
         try:
             (stdout, return_code) = self.eval(ast, None)
             self.print_pipe(stdout)
-        except OSError:
+        except OoshError as error:
+            print(error.message)
             return
 
     def print_pipe(self, pipe_pointer):
@@ -139,8 +144,8 @@ class Oosh(Cmd):
                 old_pipe_pointer = self.pipe_from_data(old_pipe_data)
                 return self.eval(ast[2], old_pipe_pointer)
             except KeyError:
-                print("You have not saved a pipe numbered", old_pipe_name)
-                raise OSError
+                raise OoshError("You have not saved a pipe numbered " +
+                                old_pipe_name)
 
         elif ast[0] == 'simplecommand':
             command = ' '.join(self.flatten_tree(ast[1]))
@@ -173,7 +178,7 @@ class Oosh(Cmd):
             pass
 
         else:
-            raise UnknownTreeException
+            raise OoshError("Unknown tree " + str(ast))
 
     def pipe_from_data(self, pipe_data):
         # this is not beautiful code, we use cat just to create a new
@@ -201,8 +206,7 @@ class Oosh(Cmd):
             process = subprocess.Popen(command, stdin=stdin, stdout=subprocess.PIPE)
             return process
         except OSError:
-            print("No such command: ", command_name)
-            raise OSError
+            raise OoshError("No such command: " + command_name)
 
     def flatten_tree(self, tree):
         # return a list of strings from a tree
@@ -212,9 +216,14 @@ class Oosh(Cmd):
         elif tree[0] == 'values':
             return self.flatten_tree(tree[1])+self.flatten_tree(tree[2])
         elif tree[0] == 'variable':
-            return [self.variables[tree[1][1:]]]
+            try:
+                variable_name = tree[1][1:]
+                return [self.variables[variable_name]]
+            except KeyError:
+                raise OoshError("Variable " + variable_name +
+                                " accessed before setting")
         else:
-            raise InvalidTreeException
+            raise OoshError("Invalid tree flattened: " + str(tree))
 
 # an object stream is made of droplets
 class Droplet:
