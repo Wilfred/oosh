@@ -134,10 +134,13 @@ class Oosh(Cmd):
             # create a process to give us a stdout to pass
             # to whatever is next in the pipeline
             old_pipe_name = ast[1][1:] # e.g. |2
-            old_pipe_data = self.saved_pipe_data[old_pipe_name]
-            old_pipe_pointer = self.pipe_from_data(old_pipe_data)
-
-            return self.eval(ast[2], old_pipe_pointer)
+            try:
+                old_pipe_data = self.saved_pipe_data[old_pipe_name]
+                old_pipe_pointer = self.pipe_from_data(old_pipe_data)
+                return self.eval(ast[2], old_pipe_pointer)
+            except KeyError:
+                print("You have not saved a pipe numbered", old_pipe_name)
+                raise OSError
 
         elif ast[0] == 'simplecommand':
             command = ' '.join(self.flatten_tree(ast[1]))
