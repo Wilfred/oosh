@@ -57,7 +57,7 @@ class OoshRequestHandler(socketserver.BaseRequestHandler):
                 connected_machines.remove(address)
                 self.request.send(b'Disconnected')
             elif request[0] == 'send':
-                self.request.send(stored_data)
+                self.request.sendall(stored_data)
                 stored_data = b''
             elif request[0] == 'command':
                 try:

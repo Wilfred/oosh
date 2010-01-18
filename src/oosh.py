@@ -59,7 +59,7 @@ class Oosh(Cmd):
         string_lines = content.splitlines()
         lines = []
         for line in string_lines:
-            if not line == '':
+            if line[0] == '{':
                 lines.append(eval(line))
 
         header = []
