@@ -15,13 +15,25 @@ class OoshError(Exception):
     def __init__(self, message):
         self.message = message
 
+class PipePointer:
+    def __init__(self, fileno=0, remote_host=''):
+        self.fileno = fileno
+        self.remote_host = remote_host
+    def is_remote(self):
+        if remote_host == '':
+            return False
+        else:
+            return True
+
 class Oosh(Cmd):
     def __init__(self):
+        # setup class variables
         Cmd.__init__(self)
         self.saved_pipe_data = {}
         self.variables = {}
 
     def onecmd(self, line):
+        # hook from cmd, called for each line entered by user
         if line.strip(' \t\n') == '':
             return
         ast = parser.parse(line)
@@ -31,7 +43,6 @@ class Oosh(Cmd):
             self.print_pipe(stdout)
         except OoshError as error:
             print(error.message)
-            return
 
     def print_pipe(self, pipe_pointer):
         # read and decode binary data in stdout
@@ -41,7 +52,8 @@ class Oosh(Cmd):
                 # data conforms to oosh structure
                 self.pretty_print(content)
             else:
-                print(content)
+                # can't use print, gives extraneous newline
+                sys.stdout.write(content)
 
     def pretty_print(self, content):
         string_lines = content.splitlines()
@@ -85,15 +97,14 @@ class Oosh(Cmd):
 
     def eval(self, ast, pipe_pointer):
         # recurse down tree, starting processes and passing pointers
-        # of pipes created as appopriate. We also pass start_data to
-        # simplecommand, sequence and pipedcommand from pipe dereferencing
+        # of pipes created as appopriate.
         
         if ast is None:
             print('Evaluated empty tree')
             return (None, 0)
 
         if ast[0] == 'sequence':
-            (stdout, returncode) = self.eval(ast[1], None, start_data)
+            (stdout, returncode) = self.eval(ast[1], None)
             self.print_pipe(stdout)
             return self.eval(ast[2], None)
 
@@ -164,7 +175,11 @@ class Oosh(Cmd):
 
             # we call command, appending argument of second pipe
             command = self.flatten_tree(ast[2][1])
-            command += ' ' + str(second_pipe_pointer.fileno())
+            command.append(str(second_pipe_pointer.fileno()))
+
+            # check user hasn't tried to run this remotely
+            if self.specifies_location(command[0]):
+                raise OoshError("Cannot run multipipe commands remotely")
             
             process = self.shell_command(' '.join(command), first_pipe_pointer)
             process.wait()
@@ -196,7 +211,12 @@ class Oosh(Cmd):
         command_name = command[0]
         if command_name == 'exit':
             sys.exit()
-        if not re.match('oosh_*', command_name) is None:
+        if self.specifies_location(command_name):
+            run_locally = True
+        else:
+            run_locally = False
+
+        if not re.match('oosh_.*', command_name) is None:
             if command_name == 'oosh_graph':
                 # graph uses pycairo, which is not py3k compatible
                 command = ['python'] + [command_name + '.py'] + command[1:]
@@ -207,6 +227,12 @@ class Oosh(Cmd):
             return process
         except OSError:
             raise OoshError("No such command: " + command_name)
+
+    def specifies_location(self, command_name):
+        if re.match('.*@.*', command_name) is None:
+            return False
+        else:
+            return True
 
     def flatten_tree(self, tree):
         # return a list of strings from a tree

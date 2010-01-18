@@ -32,7 +32,7 @@ def t_error(t):
     t.lexer.skip(1)
 
 def t_STRING(t): # any command name or argument
-    r'[a-zA-Z0-9.\-/_]+'
+    r'[a-zA-Z0-9.\-/_@]+'
     t.type = reserved.get(t.value,'STRING') # check for reserved words
     return t
 def t_QUOTEDSTRING(t): # any argument of the form 'xyz % !'
