@@ -2,18 +2,18 @@ import CairoPlot
 import cairo
 import sys
 
+pipein = sys.stdin.read().splitlines()
+lines = [eval(v) for v in pipein[:-1]]
+
 args = sys.argv[1:]
 if len(args) < 4:
-    print "usage: chart_type name value save_name"
+    print "usage: chart_type label variable filename"
     sys.exit()
 
 chart_type = args[0]
 variable_x = args[1]
 variable_y = args[2]
 file_name = args[3]
-
-pipein = sys.stdin.read().splitlines()
-lines = [eval(v) for v in pipein[:-1]]
 
 if chart_type == 'pie':
     pie_data = {}

@@ -159,7 +159,7 @@ class Oosh(Cmd):
                                 old_pipe_name)
 
         elif ast[0] == 'simplecommand':
-            command = ' '.join(self.flatten_tree(ast[1]))
+            command = self.flatten_tree(ast[1])
             process = self.shell_command(command, pipe_pointer)
             process.wait()
             return (process.stdout, process.returncode)
@@ -181,7 +181,7 @@ class Oosh(Cmd):
             if self.specifies_location(command[0]):
                 raise OoshError("Cannot run multipipe commands remotely")
             
-            process = self.shell_command(' '.join(command), first_pipe_pointer)
+            process = self.shell_command(command, first_pipe_pointer)
             process.wait()
             return (process.stdout, process.returncode)
 
@@ -206,8 +206,7 @@ class Oosh(Cmd):
         return process.stdout
 
 
-    def shell_command(self, command_string, stdin):
-        command = command_string.split(' ')
+    def shell_command(self, command, stdin):
         command_name = command[0]
         if command_name == 'exit':
             sys.exit()
