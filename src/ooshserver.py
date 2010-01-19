@@ -57,13 +57,18 @@ class OoshRequestHandler(socketserver.BaseRequestHandler):
                 connected_machines.remove(address)
                 self.request.send(b'Disconnected')
             elif request[0] == 'send':
+                # transmit data from last pipeline and reset
                 self.request.sendall(stored_data)
                 stored_data = b''
+            elif request[0] == 'receive':
+                # set data for input to pipeline
+                stored_data = request[1].encode()
             elif request[0] == 'command':
-                try:
-                    stored_data = self.shell_command(request[1:])
-                except OoshError as error:
-                    self.request.send(error.message.encode())
+                (return_code, stored_data) = self.shell_command(request[1:])
+                if return_code == 0:
+                    self.request.send(b'success')
+                else:
+                    self.requst.send(b'failed')
                     stored_data = b''
             else:
                 error = "Invalid request:" + str(request)
@@ -89,12 +94,9 @@ class OoshRequestHandler(socketserver.BaseRequestHandler):
                 process = subprocess.Popen(command, stdin=previous,
                                            stdout=subprocess.PIPE)
             process.wait()
-            return_code = process.returncode
-            if return_code != 0:
-                raise OSError
-            return process.stdout.read()
+            return (process.returncode, process.stdout.read())
         except OSError:
-            raise OoshError("No such command: " + command_name)
+            return (1, b'') # return error code to client
 
 
 if __name__ == "__main__":
