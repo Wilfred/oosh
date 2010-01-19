@@ -68,7 +68,7 @@ class OoshRequestHandler(socketserver.BaseRequestHandler):
                 if return_code == 0:
                     self.request.send(b'success')
                 else:
-                    self.requst.send(b'failed')
+                    self.request.send(b'failed')
                     stored_data = b''
             else:
                 error = "Invalid request:" + str(request)

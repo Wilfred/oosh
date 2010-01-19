@@ -16,14 +16,25 @@ class OoshError(Exception):
         self.message = message
 
 class PipePointer:
-    def __init__(self, fileno=0, remote_host=''):
-        self.fileno = fileno
+    def __init__(self, reader=None, remote_host=''):
+        self.reader = reader
         self.remote_host = remote_host
-    def is_remote(self):
-        if remote_host == '':
-            return False
+    def read(self):
+        if self.remote_host == '':
+            # stored locally as a BufferedReader
+            if self.reader is not None:
+                return self.reader.read()
+            else:
+                return b''
         else:
+            # fetch from remote server
+            # todo
+            return b''
+    def is_empty(self):
+        if self.reader is None:
             return True
+        else:
+            return False
 
 class Oosh(Cmd):
     def __init__(self):
@@ -39,7 +50,7 @@ class Oosh(Cmd):
         ast = parser.parse(line)
         print("AST: ", ast)
         try:
-            (stdout, return_code) = self.eval(ast, None)
+            (stdout, return_code) = self.eval(ast, PipePointer())
             self.print_pipe(stdout)
         except OoshError as error:
             print(error.message)
@@ -98,10 +109,12 @@ class Oosh(Cmd):
     def eval(self, ast, pipe_pointer):
         # recurse down tree, starting processes and passing pointers
         # of pipes created as appopriate.
+
+        # returns a tuple (stdout, return_code)
         
         if ast is None:
             print('Evaluated empty tree')
-            return (None, 0)
+            return (PipePointer(), 0)
 
         if ast[0] == 'sequence':
             (stdout, returncode) = self.eval(ast[1], None)
@@ -112,7 +125,7 @@ class Oosh(Cmd):
             (pipe_out, return_code) = self.eval(ast[1], None)
             pipe_number = ast[2][1:]
             self.saved_pipe_data[pipe_number] = pipe_out.read()
-            return (None, return_code)
+            return (PipePointer(), return_code)
 
         elif ast[0] == 'for':
             old_variables = self.variables.copy()
@@ -121,20 +134,20 @@ class Oosh(Cmd):
                 (stdout, return_code) = self.eval(ast[3], None)
                 self.print_pipe(stdout)
             self.variables = old_variables
-            return (None, return_code)
+            return (PipePointer(), return_code)
 
         elif ast[0] == 'while':
             while return_code == 0:
                 (dont_care, return_code) = self.eval(ast[1], None)
                 (stdout, final_return_code) = self.eval(ast[2], None)
                 self.print_pipe(stdout)
-            return (None, final_return_code)
+            return (PipePointer(), final_return_code)
 
         elif ast[0] == 'if':
             if self.eval(ast[1], None) == 0: # 0 is true for shells
                 return self.eval(ast[2], None)
             else:
-                return (None, 0)
+                return (PipePointer(), 0)
 
         elif ast[0] == 'if-else':
             if self.eval(ast[1], None) == 0:
@@ -144,7 +157,7 @@ class Oosh(Cmd):
 
         elif ast[0] == 'assign':
             self.variables[ast[1]] = self.flatten_tree(ast[2])[0]
-            return (None, 0)
+            return (PipePointer(), 0)
 
         elif ast[0] == 'derefpipe':
             # create a process to give us a stdout to pass
@@ -161,8 +174,7 @@ class Oosh(Cmd):
         elif ast[0] == 'simplecommand':
             command = self.flatten_tree(ast[1])
             process = self.shell_command(command, pipe_pointer)
-            process.wait()
-            return (process.stdout, process.returncode)
+            return (PipePointer(process.stdout), process.returncode)
 
         elif ast[0] == 'derefmultipipe':
             pipe_names = ast[1][1:].split('+')
@@ -182,8 +194,7 @@ class Oosh(Cmd):
                 raise OoshError("Cannot run multipipe commands remotely")
             
             process = self.shell_command(command, first_pipe_pointer)
-            process.wait()
-            return (process.stdout, process.returncode)
+            return (PipePointer(process.stdout), process.returncode)
 
         elif ast[0] == 'pipedcommand':
             (stdout, return_code) = self.eval(ast[1], pipe_pointer)
@@ -208,21 +219,45 @@ class Oosh(Cmd):
 
     def shell_command(self, command, stdin):
         command_name = command[0]
+        # exit if specified
         if command_name == 'exit':
             sys.exit()
-        if self.specifies_location(command_name):
-            run_locally = True
-        else:
-            run_locally = False
 
+        # prepare command string
         if not re.match('oosh_.*', command_name) is None:
             if command_name == 'oosh_graph':
                 # graph uses pycairo, which is not py3k compatible
                 command = ['python'] + [command_name + '.py'] + command[1:]
             else:
                 command = ['python3'] + [command_name + '.py'] + command[1:]
+
+        # work out where to run it
+        if self.specifies_location(command_name):
+            # todo: current progress here
+            if stdin.remote_host == '':
+                # from remote, to local
+                pass
+            else:
+                # from remote, to remote
+                pass
+        else:
+            if stdin.remote_host == '':
+                # from local, to local
+                pass
+            else:
+                # from local, to remote
+                pass
+
+        # execute it
         try:
-            process = subprocess.Popen(command, stdin=stdin, stdout=subprocess.PIPE)
+            if run_locally:
+                pass
+            else:
+                pass
+
+            process = subprocess.Popen(command, stdin=stdin.reader,
+                                       stdout=subprocess.PIPE)
+            process.wait()
             return process
         except OSError:
             raise OoshError("No such command: " + command_name)
