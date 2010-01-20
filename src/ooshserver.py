@@ -22,6 +22,7 @@ def checklogin(username, password):
 class OoshRequestHandler(socketserver.BaseRequestHandler):
     # the request handler that acts as a server
     # it is instantiated once per connection to the server
+    # recognised commands: connect, disconnect, send, receive, command
 
     def handle(self):
         global user_logins
@@ -47,7 +48,7 @@ class OoshRequestHandler(socketserver.BaseRequestHandler):
             if address not in connected_machines:
                 if checklogin(username, password):
                     connected_machines.append(address)
-                    self.request.send(b'Connected')
+                    self.request.send(b'success')
                 else:
                     self.request.send(b'Invalid password specified')
 

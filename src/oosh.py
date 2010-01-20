@@ -6,6 +6,7 @@ from cmd import Cmd
 import readline # use the python history facilities
 import re # regular expressions
 import sys
+import socket
 
 from ooshparse import parser
 
@@ -14,6 +15,35 @@ import subprocess
 class OoshError(Exception):
     def __init__(self, message):
         self.message = message
+
+def server_command(server_address, command):
+    # send the list 'command' to server at server_address,
+    # return the server's response
+    PORT = 12345
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((server_address, PORT))
+    if command[0] in ['connect', 'disconnect', 'send', 'receive']:
+        command_string = b''
+    else:
+        command_string = b'command '
+    for word in command:
+        command_string += word.encode() + b' '
+    sock.send(command_string)
+    received = sock.recv(4096)
+    sock.close()
+
+    if command[0] == 'connect' and received != b'success':
+        raise OoshError("Error: Could not log in")
+    return received
+ 
+def pipe_to_server(self, server_address, pipe_data):
+    PORT = 12345
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((server_address, PORT))
+    sock.send(b'receive ' + pipe_data)
+    received = sock.recv(4096)
+    sock.close()
+    return received
 
 class PipePointer:
     def __init__(self, reader=None, remote_host=''):
@@ -28,8 +58,9 @@ class PipePointer:
                 return b''
         else:
             # fetch from remote server
-            # todo
-            return b''
+            output = server_command(self.remote_host, ['send'])
+            print("fetched data is",output)
+            return output
     def is_empty(self):
         if self.reader is None:
             return True
@@ -173,8 +204,7 @@ class Oosh(Cmd):
 
         elif ast[0] == 'simplecommand':
             command = self.flatten_tree(ast[1])
-            process = self.shell_command(command, pipe_pointer)
-            return (PipePointer(process.stdout), process.returncode)
+            return self.shell_command(command, pipe_pointer)
 
         elif ast[0] == 'derefmultipipe':
             pipe_names = ast[1][1:].split('+')
@@ -193,8 +223,7 @@ class Oosh(Cmd):
             if self.specifies_location(command[0]):
                 raise OoshError("Cannot run multipipe commands remotely")
             
-            process = self.shell_command(command, first_pipe_pointer)
-            return (PipePointer(process.stdout), process.returncode)
+            return self.shell_command(command, first_pipe_pointer)
 
         elif ast[0] == 'pipedcommand':
             (stdout, return_code) = self.eval(ast[1], pipe_pointer)
@@ -224,6 +253,14 @@ class Oosh(Cmd):
             sys.exit()
 
         # prepare command string
+        if self.specifies_location(command_name):
+            is_local = False
+            # separate out address
+            (command_name,address) = command_name.split('@')
+            command[0] = command_name
+        else:
+            is_local = True
+
         if not re.match('oosh_.*', command_name) is None:
             if command_name == 'oosh_graph':
                 # graph uses pycairo, which is not py3k compatible
@@ -231,37 +268,51 @@ class Oosh(Cmd):
             else:
                 command = ['python3'] + [command_name + '.py'] + command[1:]
 
-        # work out where to run it
-        if self.specifies_location(command_name):
-            # todo: current progress here
-            if stdin.remote_host == '':
-                # from remote, to local
-                pass
-            else:
-                # from remote, to remote
-                pass
-        else:
-            if stdin.remote_host == '':
-                # from local, to local
-                pass
-            else:
-                # from local, to remote
-                pass
-
-        # execute it
+        # work out where to run it then do so
         try:
-            if run_locally:
-                pass
+            if not is_local:
+                if stdin.remote_host == '':
+                    # last command was local, next is remote
+                    if not stdin.is_empty:
+                        pipe_to_server(address, stdin.read())
+                    response = server_command(address, command)
+                    if response == b'success':
+                        return_code = 0
+                    else:
+                        return_code = 1
+                    return (PipePointer(remote_host=address), return_code)
+                else:
+                    # last command was remote, next is remote
+                    # need to check we are sending to the right server
+                    if stdin.remote_host == address:
+                        response = server_command(address, command)
+                        if response == b'success':
+                            return_code = 0
+                        else:
+                            return_code = 1
+                        return (PipePointer(remote_host=address), return_code)
+                    else:
+                        # get from previous server, send to next
+                        # todo
+                        pass
             else:
-                pass
-
-            process = subprocess.Popen(command, stdin=stdin.reader,
-                                       stdout=subprocess.PIPE)
-            process.wait()
-            return process
+                if stdin.remote_host == '':
+                    # last command was local, next is local
+                    process = subprocess.Popen(command, stdin=stdin.reader,
+                                               stdout=subprocess.PIPE)
+                    process.wait()
+                    return (PipePointer(process.stdout), process.returncode)
+                else:
+                    # last command was remote, next is local
+                    remote_data = stdin.read()
+                    new_pipe = self.pipe_from_data(remote_data)
+                    process = subprocess.Popen(command, stdin=new_pipe,
+                                               stdout=subprocess.PIPE)
+                    process.wait()
+                    return (PipePointer(process.stdout), process.returncode)
         except OSError:
             raise OoshError("No such command: " + command_name)
-
+    
     def specifies_location(self, command_name):
         if re.match('.*@.*', command_name) is None:
             return False
