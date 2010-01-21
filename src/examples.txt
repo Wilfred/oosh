@@ -1,0 +1,31 @@
+# for bonus points, redo this as a unit test
+
+ls # basic, calls already existing commands
+
+oosh_ls | oosh_project Filename Size | # new commands, piping
+
+# graphing, bar and pie
+oosh_ps | oosh_select wilfred | oosh_graph bar command 'CPU %' snazzy_graph.svg
+ 
+# if, showing conditionals
+
+# networking, showing neat interleaving of custom and standard CLI tools
+connect@127.0.0.1 username password;
+oosh_ls@127.0.0.1 /home/wilfred/music | grep mp3
+# note: needs to run grep remotely
+
+# for loop, checking churchill nameservers
+for x in 131.111.8.42 131.111.12.20 131.111.131.1; do ping $x -c 1; end
+
+# while/if
+if test 3 -gt 4; do echo yikes; else do echo phew; end
+if test 1 -eq 1; do echo business as usual; end
+
+# assignment
+set x 'hello world';
+echo $x
+
+# need to show rename, echo as well!
+
+# multipipe -- check me !
+oosh_ps |1; sleep 1h; oosh_ps |2; |1+2 oosh_difference

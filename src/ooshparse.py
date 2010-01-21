@@ -32,12 +32,12 @@ def p_while(p):
     p[0] = ('while', p[2], p[5])
 
 def p_if(p):
-    '''if : IF command SEMICOLON commands SEMICOLON END
-          | IF command SEMICOLON commands SEMICOLON ELSE SEMICOLON commands SEMICOLON END'''
-    if len(p) == 6:
-        p[0] = ('if', p[2], p[4])
+    '''if : IF command SEMICOLON DO commands SEMICOLON END
+          | IF command SEMICOLON DO commands SEMICOLON ELSE DO commands SEMICOLON END'''
+    if len(p) == 8:
+        p[0] = ('if', p[2], p[5])
     else:
-        p[0] = ('if-else', p[2], p[4], p[8])
+        p[0] = ('if-else', p[2], p[5], p[9])
 
 def p_assign(p):
     'assign : SET STRING value'

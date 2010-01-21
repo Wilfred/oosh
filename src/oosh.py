@@ -29,7 +29,12 @@ def server_command(server_address, command):
     for word in command:
         command_string += word.encode() + b' '
     sock.send(command_string)
-    received = sock.recv(4096)
+
+    received = b''
+    more_data = b'initial value'
+    while more_data != b'':
+        more_data = sock.recv(4096)
+        received += more_data
     sock.close()
 
     if command[0] == 'connect' and received != b'success':
@@ -41,7 +46,11 @@ def pipe_to_server(self, server_address, pipe_data):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((server_address, PORT))
     sock.send(b'receive ' + pipe_data)
-    received = sock.recv(4096)
+    received = b''
+    more_data = b'initial value'
+    while more_data != b'':
+        more_data = sock.recv(4096)
+        received += more_data
     sock.close()
     return received
 
@@ -175,13 +184,15 @@ class Oosh(Cmd):
             return (PipePointer(), final_return_code)
 
         elif ast[0] == 'if':
-            if self.eval(ast[1], PipePointer()) == 0: # 0 is true for shells
+            (stdout, return_code) = self.eval(ast[1], PipePointer())
+            if return_code == 0: # 0 is true for shells
                 return self.eval(ast[2], PipePointer())
             else:
                 return (PipePointer(), 0)
 
         elif ast[0] == 'if-else':
-            if self.eval(ast[1], PipePointer()) == 0:
+            (stdout, return_code) = self.eval(ast[1], PipePointer())
+            if return_code == 0:
                 return self.eval(ast[2], PipePointer())
             else:
                 return self.eval(ast[3], PipePointer())
@@ -223,7 +234,7 @@ class Oosh(Cmd):
             if self.specifies_location(command[0]):
                 raise OoshError("Cannot run multipipe commands remotely")
             
-            return self.shell_command(command, first_pipe_pointer)
+            return self.shell_command(command, PipePointer(first_pipe_pointer))
 
         elif ast[0] == 'pipedcommand':
             (stdout, return_code) = self.eval(ast[1], pipe_pointer)

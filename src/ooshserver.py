@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import socketserver
 import hashlib
 import oosh
@@ -51,6 +53,9 @@ class OoshRequestHandler(socketserver.BaseRequestHandler):
                     self.request.send(b'success')
                 else:
                     self.request.send(b'Invalid password specified')
+            else:
+                # already logged in anyway
+                self.request.send(b'success')
 
         elif self.client_address[0] in connected_machines:
             # execute requested command, or disconnect if asked
