@@ -35,5 +35,5 @@ elif chart_type == 'bar':
             labels.append(name)
             data.append(value)
     CairoPlot.bar_plot (file_name, data, 800, 600, border=20, grid=True,
-                        rounded_corners=True, h_labels=labels)
+                        rounded_corners=True, h_labels=labels) 
 

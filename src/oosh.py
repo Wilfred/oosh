@@ -148,12 +148,12 @@ class Oosh(Cmd):
             return (PipePointer(), 0)
 
         if ast[0] == 'sequence':
-            (stdout, returncode) = self.eval(ast[1], None)
+            (stdout, returncode) = self.eval(ast[1], PipePointer())
             self.print_pipe(stdout)
-            return self.eval(ast[2], None)
+            return self.eval(ast[2], PipePointer())
 
         elif ast[0] == 'savepipe':
-            (pipe_out, return_code) = self.eval(ast[1], None)
+            (pipe_out, return_code) = self.eval(ast[1], PipePointer())
             pipe_number = ast[2][1:]
             self.saved_pipe_data[pipe_number] = pipe_out.read()
             return (PipePointer(), return_code)
@@ -162,29 +162,29 @@ class Oosh(Cmd):
             old_variables = self.variables.copy()
             for value in self.flatten_tree(ast[2]):
                 self.variables[ast[1]] = value
-                (stdout, return_code) = self.eval(ast[3], None)
+                (stdout, return_code) = self.eval(ast[3], PipePointer())
                 self.print_pipe(stdout)
             self.variables = old_variables
             return (PipePointer(), return_code)
 
         elif ast[0] == 'while':
             while return_code == 0:
-                (dont_care, return_code) = self.eval(ast[1], None)
-                (stdout, final_return_code) = self.eval(ast[2], None)
+                (dont_care, return_code) = self.eval(ast[1], PipePointer())
+                (stdout, final_return_code) = self.eval(ast[2], PipePointer())
                 self.print_pipe(stdout)
             return (PipePointer(), final_return_code)
 
         elif ast[0] == 'if':
-            if self.eval(ast[1], None) == 0: # 0 is true for shells
-                return self.eval(ast[2], None)
+            if self.eval(ast[1], PipePointer()) == 0: # 0 is true for shells
+                return self.eval(ast[2], PipePointer())
             else:
                 return (PipePointer(), 0)
 
         elif ast[0] == 'if-else':
-            if self.eval(ast[1], None) == 0:
-                return self.eval(ast[2], None)
+            if self.eval(ast[1], PipePointer()) == 0:
+                return self.eval(ast[2], PipePointer())
             else:
-                return self.eval(ast[3], None)
+                return self.eval(ast[3], PipePointer())
 
         elif ast[0] == 'assign':
             self.variables[ast[1]] = self.flatten_tree(ast[2])[0]
