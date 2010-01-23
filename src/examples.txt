@@ -1,14 +1,14 @@
-# for bonus points, redo this as a unit test
+# these are tests more than demonstrations of usefulness
+# would be better as a unit test
 
 ls # basic, calls already existing commands
 
-oosh_ls | oosh_project Filename Size | # new commands, piping
+# new commands, piping
+oosh_ls | oosh_project Filename Size | oosh_sort Size
 
 # graphing, bar and pie
 oosh_ps | oosh_select wilfred | oosh_graph bar command 'CPU %' snazzy_graph.svg
  
-# if, showing conditionals
-
 # networking, showing neat interleaving of custom and standard CLI tools
 connect@127.0.0.1 username password;
 oosh_ls@127.0.0.1 /home/wilfred/music | grep mp3
@@ -21,11 +21,29 @@ for x in 131.111.8.42 131.111.12.20 131.111.131.1; do ping $x -c 1; end
 if test 3 -gt 4; do echo yikes; else do echo phew; end
 if test 1 -eq 1; do echo business as usual; end
 
+# while
+
 # assignment
 set x 'hello world';
 echo $x
 
-# need to show rename, echo as well!
+# need to show rename, echo, join (product), passwd, daemon
 
 # multipipe -- check me !
 oosh_ps |1; sleep 1h; oosh_ps |2; |1+2 oosh_difference
+
+# use cases:
+# consider the busy system administrator
+# he wants to view, analyse and draw graphs of data from all his systems
+# 1) finding a process that's hogging a system -- need a easy sort
+# 2) find which users are using a given shell -- need to join ls and passwd
+# 3) find the difference in logs between two systems -- need a convenient
+# network abstraction
+# 4) wants to plot graphs -- need graphing utilities that structure the data
+# 5) wants to execute equally powerful manipulation (grep etc) on the structured
+# data -- need to demonstrate the completeness of our manipulation tools
+# 6) need to be easily extract log data -- needs utilities which understand the
+# log structure
+# 7) needs to find directory hogs -- needs threshold filtering
+
+oosh_log | oosh_project Daemon Message Time

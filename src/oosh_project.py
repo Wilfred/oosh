@@ -1,6 +1,8 @@
 import sys
 
 args = sys.argv[1:]
+if len(args) < 1:
+    sys.exit(0) # done
 pipein = sys.stdin.read().splitlines()
 lines = [eval(v) for v in pipein[:-1]]
 for dic in lines:

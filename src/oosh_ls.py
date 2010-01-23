@@ -1,4 +1,3 @@
-# echo: return a single droplet of data as given as arguments
 import sys
 import os
 import pwd
