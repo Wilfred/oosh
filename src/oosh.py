@@ -84,8 +84,10 @@ class Oosh(Cmd):
         self.variables = {}
 
     def onecmd(self, line):
+        self.set_colour('white')
         # hook from cmd, called for each line entered by user
         if line.strip(' \t\n') == '':
+            self.set_colour('red')
             return
         ast = parser.parse(line)
         print("AST: ", ast)
@@ -94,6 +96,7 @@ class Oosh(Cmd):
             self.print_pipe(stdout)
         except OoshError as error:
             print(error.message)
+        self.set_colour('red')
 
     def print_pipe(self, pipe_pointer):
         # read and decode binary data in stdout
@@ -137,7 +140,9 @@ class Oosh(Cmd):
         for key in header:
             # print string plus requisite number of spaces
             header_text += key + ' '*(column_widths[key]-len(key)+1)
+        self.set_colour('purple')
         print(header_text)
+        self.set_colour('white')
             
         for line in lines:
             line_text = ''
@@ -347,6 +352,14 @@ class Oosh(Cmd):
         else:
             raise OoshError("Invalid tree flattened: " + str(tree))
 
+    def set_colour(self, colour='white'):
+        if colour == 'white':
+            sys.stdout.write('\033[1;37m')
+        elif colour == 'red':
+            sys.stdout.write('\033[1;31m')
+        elif colour == 'purple':
+            sys.stdout.write('\033[1;35m')
+
 # an object stream is made of droplets
 class Droplet:
     def __init__(self, value):
@@ -377,5 +390,6 @@ def parse(ooshstring):
 
 if __name__=='__main__':
     oosh = Oosh()
+    oosh.set_colour('red')
     oosh.prompt = "$ "
-    oosh.cmdloop("Welcome to oosh.")
+    oosh.cmdloop("\033[1;37mWelcome to oosh.\033[1;31m")
