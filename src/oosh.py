@@ -158,7 +158,7 @@ class Oosh(Cmd):
         # recurse down tree, starting processes and passing pointers
         # of pipes created as appopriate.
 
-        # returns a tuple (stdout, return_code)
+        # returns a tuple (stdout_pipe_pointer, return_code)
         
         if ast is None:
             print('Evaluated empty tree')
@@ -216,7 +216,7 @@ class Oosh(Cmd):
             try:
                 old_pipe_data = self.saved_pipe_data[old_pipe_name]
                 old_pipe_pointer = self.pipe_from_data(old_pipe_data)
-                return self.eval(ast[2], old_pipe_pointer)
+                return self.eval(ast[2], PipePointer(old_pipe_pointer))
             except KeyError:
                 raise OoshError("You have not saved a pipe numbered " +
                                 old_pipe_name)
