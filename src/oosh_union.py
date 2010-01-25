@@ -7,8 +7,8 @@ second_pipe_fd = int(sys.argv[-1])
 first_pipe_in = sys.stdin.read().splitlines()
 second_pipe_in = os.fdopen(second_pipe_fd).read().splitlines()
 
-first_lines = [eval(v) for v in first_pipe_in[:-1]]
-second_lines = [eval(v) for v in second_pipe_in[:-1]]
+first_lines = [eval(v) for v in first_pipe_in]
+second_lines = [eval(v) for v in second_pipe_in]
 
 unioned = first_lines + second_lines
 

@@ -57,7 +57,7 @@ def p_command_multipipe(p):
     if len(p) == 3:
         p[0] = ('derefmultipipe', p[1], p[2])
     else:
-        p[0] = ('pipedcommand', ('derefmultipipe', p[1], p[2]), p[3])
+        p[0] = ('pipedcommand', ('derefmultipipe', p[1], p[2]), p[4])
 
 def p_values(p):
     '''values : value values
@@ -86,7 +86,7 @@ def p_simplecommand(p):
     
 def p_multicommand(p):
     '''multicommand : values'''
-    p[0] = ('muticommand', p[1])
+    p[0] = ('multicommand', p[1])
 
 # Error rule for syntax errors
 def p_error(p):

@@ -36,7 +36,9 @@ oosh_ps |1; sleep 1h; oosh_ps |2; |1+2 oosh_difference
 # consider the busy system administrator
 # he wants to view, analyse and draw graphs of data from all his systems
 # 1) finding a process that's hogging a system -- need a easy sort
+# oosh_ps | oosh_project User Command 'CPU %' | oosh_sort 'CPU %'
 # 2) find which users are using a given shell -- need to join ls and passwd
+# 
 # 3) find the difference in logs between two systems -- need a convenient
 # network abstraction
 # 4) wants to plot graphs -- need graphing utilities that structure the data
@@ -46,7 +48,9 @@ oosh_ps |1; sleep 1h; oosh_ps |2; |1+2 oosh_difference
 # log structure
 # 7) needs to find directory hogs -- needs threshold filtering
 # 8) wants to discard his old buggy scripts: consider:
-# ps aux | sort -k 2,2 | sed 's/ \+/ /g' | cut -d " " -f 1,3,11- 
+# ps aux | tail -n +2 | sort -k 2,2 | sed 's/ \+/ /g' | cut -d " " -f 1,3,11- 
+# remove header, sort on 2nd column, change to single spaces, cut columns 1,3
+# and 11+
 # vs
 # oosh_ps | oosh_project User Command 'CPU %' | oosh_sort 'CPU %'
 
