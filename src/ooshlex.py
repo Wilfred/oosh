@@ -28,7 +28,7 @@ t_ignore = ' \t\n'
 
 # in the unlikely event of lexing errors:
 def t_error(t):
-    print("Lexing error from input", t.value[0])
+    print("Forbidden character:", t.value[0])
     t.lexer.skip(1)
 
 def t_STRING(t): # any command name or argument

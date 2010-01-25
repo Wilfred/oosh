@@ -21,7 +21,10 @@ def server_command(server_address, command):
     # return the server's response
     PORT = 12345
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((server_address, PORT))
+    try:
+        sock.connect((server_address, PORT))
+    except socket.gaierror:
+        raise OoshError(server_address + " is not a valid address")
     if command[0] in ['connect', 'disconnect', 'send', 'receive']:
         command_string = b''
     else:
@@ -330,7 +333,7 @@ class Oosh(Cmd):
             raise OoshError("No such command: " + command_name)
     
     def specifies_location(self, command_name):
-        if re.match('.*@.*', command_name) is None:
+        if re.match('.+@.+', command_name) is None:
             return False
         else:
             return True
@@ -354,7 +357,7 @@ class Oosh(Cmd):
 
     def set_colour(self, colour='white'):
         if colour == 'white':
-            sys.stdout.write('\033[1;37m')
+            sys.stdout.write('\033[0;37m')
         elif colour == 'red':
             sys.stdout.write('\033[1;31m')
         elif colour == 'purple':
@@ -392,4 +395,4 @@ if __name__=='__main__':
     oosh = Oosh()
     oosh.set_colour('red')
     oosh.prompt = "$ "
-    oosh.cmdloop("\033[1;37mWelcome to oosh.\033[1;31m")
+    oosh.cmdloop("\033[0;37mWelcome to oosh.\033[1;31m")
