@@ -16,5 +16,7 @@ for left in first_lines:
         item = dict(left.items() | right.items())
         product.append(item)
 
+# note the loop below will go into an infinite loop for large datasets
+# where large is >200
 for dic in product:
     sys.stdout.write(dic.__repr__() + '\n')
