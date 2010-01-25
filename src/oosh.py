@@ -124,6 +124,8 @@ class Oosh(Cmd):
             for key in line.keys():
                 if key not in header:
                     header.append(key)
+        # alphabetical order looks better:
+        header.sort(key=str.lower)
 
         # get optimum width:
         column_widths = {}
@@ -150,7 +152,10 @@ class Oosh(Cmd):
         for line in lines:
             line_text = ''
             for key in header:
-                datum = str(line[key])
+                try:
+                    datum = str(line[key])
+                except KeyError:
+                    datum = '-'
                 line_text += datum + ' '*(column_widths[key]-len(datum)+1)
             print(line_text)
 

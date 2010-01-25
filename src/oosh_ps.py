@@ -8,7 +8,7 @@ import sys
 raw_data = subprocess.getoutput('ps -eo user,pid,pcpu,pmem,comm --no-header')
 lines = raw_data.split('\n')
 tidy_data = [line.split() for line in lines]
-named_data = [zip(['user', 'PID', 'CPU %', 'Memory %', 'command'],
+named_data = [zip(['User', 'PID', 'CPU %', 'Memory %', 'Command'],
                   line) for line in tidy_data]
 
 droplets = [dict(line) for line in named_data]
