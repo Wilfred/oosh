@@ -1,0 +1,71 @@
+% Copyright 2009 Wilfred Hughes, CC-BY license
+\documentclass[a4paper]{article}
+
+% same formatting as proposal
+\parindent 0pt
+\parskip 6pt
+
+\begin{document}
+
+\title{Progress Report}
+\author{Wilfred Hughes}
+\maketitle
+
+{\bf Project Title}: oosh: An object oriented shell
+
+\medskip
+
+{\bf Student}: Wilfred Hughes wrah2@cam.ac.uk
+
+{\bf Supervisor}: David Eyers
+
+{\bf Director of Studies}: John Fawcett
+
+{\bf Overseers}: Jon Crowcroft and Pietro Lio
+
+\section{Progress Relative To Schedule}
+According to the original schedule, the project is two weeks behind. The
+interpreter, many commands and the tabular data structure have all been
+implemented and function as expected. The networking capabilities have basic
+functionality implemented but the planned optimisations have not yet been
+coded.
+
+I am confident that I can recover one week in the schedule this term, and so my
+projected time for completion is now one week into the Easter vacation.
+
+\section{Difficulties Experienced}
+The interpreter is a core piece of functionality and most other components of
+programs interface with it in some fashion. My initial prototyping code
+duplicated some functionality of the lexer and parser, resulting in internal
+interfaces changing several times during development. A more efficient use of
+time would have been to schedule writing the interpreter at an earlier stage.
+
+Another complexity experienced has resulted from my choice of language, Python
+3. Whilst largely enabling me to do more with less code, it is only 2 years old
+and this presented a few problems. A number of libraries I wished to use were
+not compatible and much third-party Python documentation is written with Python
+2.X in mind. 
+
+\section{Accomplishments So Far}
+At time of writing, the shell is very capable for running commands locally. The
+user may use any command accessible from a traditional shell, or he may use any
+of the (currently 13) structured data commands. The two different command types
+may even be interleaved at will. Oosh will print any structured data in a human
+readable format and behaves as a traditional shell otherwise.
+
+A basic client/server architecture also exists, allowing unoptimised network
+distribution of commands.
+
+Every component of Oosh understands the data structures used by structured data
+commands. This enables automatic SVG graph generation based on the metadata
+flowing through pipelines.
+
+The shell also supports a number convenience functions, such as command history,
+output colouring and the saving of pipeline results for further computation or
+later examination.
+
+Finally, a number of test cases have been written, ranging from simple command
+tests to useful examples that would be extremely difficult to achieve with a
+traditional shell.
+
+\end{document}
