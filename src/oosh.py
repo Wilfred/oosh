@@ -85,8 +85,12 @@ class Oosh(Cmd):
         Cmd.__init__(self)
         self.saved_pipe_data = {}
         self.variables = {}
+        self.command_count = 1
 
     def onecmd(self, line):
+        self.command_count += 1
+        self.prompt = str(self.command_count) + '$ '
+
         self.set_colour('white')
         # hook from cmd, called for each line entered by user
         if line.strip(' \t\n') == '':
@@ -399,5 +403,5 @@ def parse(ooshstring):
 if __name__=='__main__':
     oosh = Oosh()
     oosh.set_colour('red')
-    oosh.prompt = "$ "
+    oosh.prompt = "1$ "
     oosh.cmdloop("\033[0;37mWelcome to oosh.\033[1;31m")
