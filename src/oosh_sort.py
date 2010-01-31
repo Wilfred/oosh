@@ -16,14 +16,18 @@ if len(lines) > 0 and sort_on not in lines[0].keys():
     sys.exit(1)  
 
 # treat data numerically if possible, it comes in as a string
+# preferring whole numbers if possible
 is_numeric = True
 for line in lines:
     try:
-        line[sort_on] = float(line[sort_on])
+        line[sort_on] = int(line[sort_on])
     except ValueError:
-        is_numeric = False
-        break
-# if we have mixed data, we may have converted to float, so revert
+        try:
+            line[sort_on] = float(line[sort_on])
+        except ValueError:
+            is_numeric = False
+            break
+# if we have mixed data, we may have converted to float/int, so revert
 if not is_numeric:
     for line in lines:
         line[sort_on] = str(line[sort_on])

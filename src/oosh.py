@@ -283,14 +283,12 @@ class Oosh(Cmd):
         else:
             address = stdin.remote_host
             specifies_remote = False
-        print("specifies_remote:",specifies_remote)
 
         # determine whether previous command was remote
         if stdin.remote_host == '':
             previous_was_remote = False
         else:
             previous_was_remote = True
-        print("previous_was_remote:",previous_was_remote)
 
         # determine whether command can be safely moved
         safe_commands = ['grep', 'oosh_select', 'oosh_project', 'oosh_rename',
@@ -299,7 +297,6 @@ class Oosh(Cmd):
             command_is_movable = True
         else:
             command_is_movable = False
-        print("command_is_movable:",command_is_movable)
 
         if previous_was_remote:
             previous_is_remote = True
