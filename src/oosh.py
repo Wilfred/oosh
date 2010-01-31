@@ -25,6 +25,8 @@ def server_command(server_address, command):
         sock.connect((server_address, PORT))
     except socket.gaierror:
         raise OoshError(server_address + " is not a valid address")
+    except socket.error:
+        raise OoshError("Could not connect to " + server_address)
     if command[0] in ['connect', 'disconnect', 'send', 'receive']:
         command_string = b''
     else:
@@ -273,6 +275,51 @@ class Oosh(Cmd):
         process.wait()
         return process.stdout
 
+    def decide_command_location(self, command_name, stdin):
+        # determine whether user has specified
+        if self.specifies_location(command_name):
+            specifies_remote = True
+            (command_name,address) = command_name.split('@')
+        else:
+            address = stdin.remote_host
+            specifies_remote = False
+        print("specifies_remote:",specifies_remote)
+
+        # determine whether previous command was remote
+        if stdin.remote_host == '':
+            previous_was_remote = False
+        else:
+            previous_was_remote = True
+        print("previous_was_remote:",previous_was_remote)
+
+        # determine whether command can be safely moved
+        safe_commands = ['grep', 'oosh_select', 'oosh_project', 'oosh_rename',
+                         'oosh_sort']
+        if command_name in safe_commands:
+            command_is_movable = True
+        else:
+            command_is_movable = False
+        print("command_is_movable:",command_is_movable)
+
+        if previous_was_remote:
+            previous_is_remote = True
+            if specifies_remote:
+                next_is_remote = True
+            elif command_is_movable:
+                next_is_remote = True
+                
+            else:
+                next_is_remote = False
+        else:
+            previous_is_remote = False
+            if specifies_remote:
+                next_is_remote = True
+            elif command_is_movable:
+                next_is_remote = False
+            else:
+                next_is_remote = False
+
+        return (previous_is_remote, next_is_remote, address)
 
     def shell_command(self, command, stdin):
         command_name = command[0]
@@ -280,14 +327,13 @@ class Oosh(Cmd):
         if command_name == 'exit':
             sys.exit()
 
+        # find where to run command
+        (previous_is_remote, next_is_remote, address) = self.decide_command_location(command_name, stdin)
+
         # prepare command string
         if self.specifies_location(command_name):
-            is_local = False
-            # separate out address
-            (command_name,address) = command_name.split('@')
+            (command_name,dont_care) = command_name.split('@')
             command[0] = command_name
-        else:
-            is_local = True
 
         if not re.match('oosh_.*', command_name) is None:
             if command_name == 'oosh_graph':
@@ -298,8 +344,8 @@ class Oosh(Cmd):
 
         # work out where to run it then do so
         try:
-            if not is_local:
-                if stdin.remote_host == '':
+            if next_is_remote:
+                if not previous_is_remote:
                     # last command was local, next is remote
                     if not stdin.is_empty:
                         pipe_to_server(address, stdin.read())
@@ -324,7 +370,7 @@ class Oosh(Cmd):
                         # todo
                         pass
             else:
-                if stdin.remote_host == '':
+                if not previous_is_remote:
                     # last command was local, next is local
                     process = subprocess.Popen(command, stdin=stdin.reader,
                                                stdout=subprocess.PIPE)

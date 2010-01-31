@@ -29,8 +29,11 @@ echo $x
 
 # need to show rename, echo, join (product), passwd, log
 
-# multipipe -- check me !
+# multipipe
 oosh_ps |1; sleep 1h; oosh_ps |2; |1+2 oosh_difference
+
+# remote moving of commands
+oosh_ls@127.0.01 / | oosh_select Filename Size
 
 # use cases:
 # consider the busy system administrator
