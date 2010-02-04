@@ -125,9 +125,35 @@ purpose.
 % overview
 % why this solution?
 
+\section{Overview}
+Watch this space.
+
+
 \cleardoublepage
 
 \chapter{Preparation}
+
+\section{Brief History}
+The command line shell (henceforth \emph{shell}) is one of the earliest user
+interfaces in the history of computing, with recognisable shells having appeared
+by 1965 \cite{multics}on the Multics system. A shell offers the user a
+convenient abstraction to interact with his system. He may perform common tasks
+using considerably shorter commands than using his programming language of
+choice. A shell scripting language, therefore, has always been an exchange of
+power for brevity.
+
+The original Bourne shell was a product of hacking and experimentation, so was
+never formally specified. Bash has pursued backwards compatibility.
+
+Today's shells are therefore optimised for common use cases that are
+outdated. They have ill-specified languages, making it hard for the user to
+exercise confidence in preparing scripts---indeed, even implementing
+\texttt{sh}-compatible behaviour is non-trivial.
+
+I revisited these assumptions. \texttt{who | wc} is not supported by the
+original grammar, and pipes are an early (but not an original) feature. How can
+I make these commands simpler? What other use cases have emerged since the
+original shell formulation?
 
 % investigation -- compared to existing systems
 %   -- bash, fish, powershell, osh (Timoth Budd 1989), REPLs
@@ -141,6 +167,18 @@ purpose.
 %     -- similar grammar, readily piped to system below?
 % theory?
 % summary
+
+% quote: The grammar presented in Bourne's paper describing the shell
+% distributed with the Seventh Edition of Unix is so far off that it does not
+% allow the command who|wc. In fact, as Tom Duff states:
+
+% “Nobody really knows what the Bourne shell's grammar is. Even examination of
+% the source code is little help.” -- Tom Duff, “Rc-A Shell for Plan 9 and UNIX
+% systems”, Proc. of the Summer 1990 EUUG Conf., London, July, 1990, pp. 21-33
+
+% The POSIX.2 standard includes a yacc grammar that comes close to capturing the
+% Bourne shell's behavior, but it disallows some constructs which sh accepts
+% without complaint-and there are scripts out there that use them.
 
 \cleardoublepage
 
@@ -179,7 +217,14 @@ purpose.
 % the bibliography
 
 \addcontentsline{toc}{chapter}{Bibliography}
-\bibliography{refs}
+\begin{thebibliography}{1} % at most one citation
+
+\bibitem{multics}
+  Louis Pouzin
+  \emph{Multics: The Origin of the Shell}
+  http://www.multicians.org/shell.html
+
+\end{thebibliography}
 \cleardoublepage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
