@@ -133,7 +133,7 @@ Watch this space.
 
 \chapter{Preparation}
 
-\section{Brief History}
+\section{Historical Motivations}
 The command line shell (henceforth \emph{shell}) is one of the earliest user
 interfaces in the history of computing, with recognisable shells having appeared
 by 1965 \cite{multics}on the Multics system. A shell offers the user a
@@ -155,8 +155,54 @@ original grammar, and pipes are an early (but not an original) feature. How can
 I make these commands simpler? What other use cases have emerged since the
 original shell formulation?
 
+\section{Existing Solutions}
+% feature matrix/table?
+I evaluated several well-known shells available today. One of the most popular
+options is Bash, which is the default on GNU/Linux and Mac OS X.
+
+A more recent alternative to Bash is Fish, the Friendly Interactive Shell. Fish
+is not a substantial departure from Bash, but breaks backwards compatibility to
+simplify the scripting language it accepts.
+
+Another recent development is PowerShell, a Microsoft scripting language and
+shell released in 2006. PowerShell is a more radical departure from traditional
+shell design, offering an object-oriented approach. Whilst this offers an
+increase in expressive power, the PowerShell design does not seek to optimise
+the interface for interactive usage. PowerShell cmdlets use a more verbose
+noun-verb naming scheme and the programmer is sometimes exposed to underlying
+Windows API for simple networking tasks.
+
+\section{Requirements}
+I needed to create a shell that would be familiar to an experience shell
+user, so my shell should follow shell conventions where sensible. This shell
+would enable the user to transfer structured data through pipelines using
+familiar pipeline tools. It would also enable convenient network access and
+optimise network data flow where possible.
+
+In addition to the shell with its built-ins, I needed a selection of programs
+that understood the structured data and demonstrated its flexibility and
+versatility. Clearly with data in a tabular format, a set of commands that offer
+database-like commands would be both familiar to the user and powerful. Another
+clear advantage of structured data is the ability to draw graphs, so an
+automatic graphing facility was created.
+
+% needs more on optimisation
+
+\section{Development Approach}
+Since my design aimed to build on traditional shell design, extending an
+existing shell was an option worth considering, particularly since most Unix
+shells are available under an open-source lincense.
+
+% bash and fish: no proper grammar. hard to change guts for more radical
+% features, bash substantial body of code -- compatibilty unwanted, no hackable grammar
+% python offered cmd.py which is skeleton shell
+% networking easier in python, text manipulation particularly so
+
+From scratch. Git. Github. Python. Fairly exploratory. Fish-inspired
+grammar. Simplified system as proof of concept.
+
 % investigation -- compared to existing systems
-%   -- bash, fish, powershell, osh (Timoth Budd 1989), REPLs
+%   -- bash, fish, powershell, osh (Timoth Budd 1989), REPLs, cmd.exe
 %     -- macro language vs programming language
 %   -- bash particularly: lex and parse approach, backwards compat
 % requirements (from proposal)
