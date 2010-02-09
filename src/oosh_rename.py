@@ -1,4 +1,5 @@
 import sys
+import oosh
 
 args = sys.argv[1:]
 
@@ -7,7 +8,7 @@ tolist = [args[i] for i in range(1,len(args),2)]
 
 
 pipein = sys.stdin.read().splitlines()
-lines = [eval(v) for v in pipein[:-1]]
+lines = oosh.get_from_pipe(pipein)
 for dic in lines:
     for key in list(dic.keys()):
         for i in range(len(fromlist)):

@@ -443,6 +443,15 @@ def parse(ooshstring):
     pairs = [s.split('":"') for s in stripped]
     return dict(pairs)
 
+def get_from_pipe(pipein):
+    output = []
+    for value in pipein:
+        if len(value) > 0 and value[0] != '\x1b':
+            # avoid errors due to empty lines or escape sequences
+            # (no idea how escape sequences are occurring)
+            output.append(eval(value))
+    return output
+
 if __name__=='__main__':
     oosh = Oosh()
     oosh.set_colour('red')

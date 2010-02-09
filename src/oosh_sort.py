@@ -1,5 +1,6 @@
 import sys
 import operator
+import oosh
 from oosh import OoshError
 
 args = sys.argv[1:]
@@ -9,7 +10,7 @@ if len(args) < 1:
 
 sort_on = args[0]
 pipein = sys.stdin.read().splitlines()
-lines = [eval(v) for v in pipein[:-1]]
+lines = oosh.get_from_pipe(pipein)
 # check we are sorting on a valid column
 if len(lines) > 0 and sort_on not in lines[0].keys():
     print(sort_on,"is not a valid column name")

@@ -1,4 +1,5 @@
 import sys
+import oosh
 
 args = sys.argv[1:]
 
@@ -10,7 +11,7 @@ colname = args[0]
 values = args[1:]
 
 pipein = sys.stdin.read().splitlines()
-lines = [eval(v) for v in pipein[:-1]]
+lines = oosh.get_from_pipe(pipein)
 for dic in lines:
     if dic[colname] in values:
         sys.stdout.write(dic.__repr__())

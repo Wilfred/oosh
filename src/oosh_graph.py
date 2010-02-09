@@ -1,9 +1,10 @@
 import CairoPlot
 import cairo
 import sys
+import oosh
 
 pipein = sys.stdin.read().splitlines()
-lines = [eval(v) for v in pipein[:-1]]
+lines = oosh.get_from_pipe(pipein)
 
 args = sys.argv[1:]
 if len(args) < 4:
