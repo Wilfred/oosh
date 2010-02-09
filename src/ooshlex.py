@@ -36,7 +36,7 @@ def t_STRING(t): # any command name or argument
     t.type = reserved.get(t.value,'STRING') # check for reserved words
     return t
 def t_QUOTEDSTRING(t): # any argument of the form 'xyz % !'
-    r'\'[a-zA-Z0-9 !%]*?\''
+    r'\'[a-zA-Z0-9/ !%]*?\''
     t.value = t.value[1:-1] # strip leading and trailing '
     return t
 

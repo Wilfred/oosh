@@ -73,7 +73,7 @@ class PipePointer:
         else:
             # fetch from remote server
             output = server_command(self.remote_host, ['send'])
-            print("fetched data is",output)
+            # print("fetched data is",output) 
             return output
     def is_empty(self):
         if self.reader is None:
@@ -99,7 +99,7 @@ class Oosh(Cmd):
             self.set_colour('red')
             return
         ast = parser.parse(line)
-        print("AST: ", ast)
+        # print("AST: ", ast)
         try:
             (stdout, return_code) = self.eval(ast, PipePointer())
             self.print_pipe(stdout)
