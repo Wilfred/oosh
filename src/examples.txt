@@ -7,7 +7,7 @@ ls # basic, calls already existing commands
 oosh_ls | oosh_project Filename Size | oosh_sort Size
 
 # graphing, bar and pie
-oosh_ps | oosh_select wilfred | oosh_graph bar Command 'CPU %' snazzy_graph.svg
+oosh_ps | oosh_select User wilfred | oosh_graph bar Command 'CPU %' snazzy_graph.svg
  
 # networking, showing neat interleaving of custom and standard CLI tools
 connect@127.0.0.1 username password;
@@ -46,7 +46,7 @@ oosh_ps | oosh_project User Command 'CPU %' | oosh_sort 'CPU %'
 # network abstraction
 oosh_log@develop.example.com |1; oosh_log@production.example.com; |1+2 oosh_difference
 # 4) wants to plot graphs -- need graphing utilities that structure the data
-oosh_ps | oosh_select wilfred | oosh_graph bar command 'CPU %' snazzy_graph.svg
+oosh_ps | oosh_select User wilfred | oosh_graph bar command 'CPU %' snazzy_graph.svg
 # 5) wants to execute equally powerful manipulation (grep etc) on the structured
 # data as he can with SQL -- need to demonstrate the completeness of our manipulation tools
 relational algebra: select, project, rename, product, union, difference

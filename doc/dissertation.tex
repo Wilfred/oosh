@@ -194,6 +194,14 @@ existing shell was an option worth considering, particularly since most Unix
 shells are available under an open-source lincense. I investigated building on
 top of Bash or Fish, but both of these were substantially 
 
+% features:
+% n/w optimisation
+% new pipeline metaphor -- save, y-pipe, networking
+% strict data format
+% interleave new commands
+% primitive namespacing
+% familiar syntax
+
 % bash and fish: no proper grammar. hard to change guts for more radical
 % features, bash substantial body of code -- compatibilty unwanted, no hackable grammar
 % python offered cmd.py which is skeleton shell
@@ -201,6 +209,16 @@ top of Bash or Fish, but both of these were substantially
 
 From scratch. Git. Github. Python. Fairly exploratory. Fish-inspired
 grammar. Simplified system as proof of concept.
+
+Typical CLI commands are developed iteratively, which is why commands print
+their usage guidelines if used incorrectly. Pipeline saving allows the user to
+develop his pipelines more incrementally.
+
+A shell is not as expressive as a programming language (sh was unusual in having
+optional ; in its day), and a REPL has a different feel. A shell optimises for
+few keystrokes for commands, simple system adminstration tasks, and so on. A
+shell has no floating point maths and limited integer support. Almost everything
+is exported to invoked processes to handle instead.
 
 % investigation -- compared to existing systems
 %   -- bash, fish, powershell, osh (Timoth Budd 1989), REPLs, cmd.exe
