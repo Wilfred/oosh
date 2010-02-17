@@ -124,6 +124,10 @@ purpose.
 \pagestyle{headings}
 
 \chapter{Introduction}
+% need to decide on capitalisation conventions for oosh, bash and fish
+My project was to create a Unix shell from scratch. This gave me the opportunity
+to re-evaluate design decisions made by previous shell developers. I therefore
+explored a design that made today's common shell tasks easier.
 
 % overview
 % why this solution?
@@ -195,7 +199,28 @@ automatic graphing facility was created.
 Since my design aimed to build on traditional shell design, extending an
 existing shell was an option worth considering, particularly since most Unix
 shells are available under an open-source lincense. I investigated building on
-top of Bash or Fish, but both of these were substantially 
+top of Bash or Fish, but both of these were substantial pieces of C code, most
+of which would require major changes to work with my intended features. I
+concluded that starting afresh was my best option.
+
+Since I was developing a tools for a modern Unix system, I chose a workflow that
+followed today's Unix coding practices. I chose to write my shell in Python, a
+modern scripting language, used Emacs as my editor and used Git, a distributed
+version control system to track changes. By the same logic I chose to host my
+code on GitHub, which had the additional benefit of acting as an off-site
+backup. Later on I needed a parser and lexer so chose Python implementations of
+Lex and Yacc as these are also standard tools.
+
+My initial specification was very broad, which enabled me to use a fairly
+exploratory style of coding. My final grammar is in figure {\em foo} and was
+developed iteratively after researching the syntax used in bash and fish.
+
+Ultimately a mainstream shell is a very large body of code (for example, Bash
+4.1 contains over 140,000 lines of code) and so I could not hope to replicate all
+this functionality in the time available. My objective then became to produce a
+proof-of-concept shell that demonstrated the advantages of my design.
+% in bash directory ran $ find . -name '*.[ch]' | xargs wc -l
+
 
 % features:
 % n/w optimisation
@@ -251,51 +276,105 @@ is exported to invoked processes to handle instead.
 \cleardoublepage
 
 \chapter{Implementation}
+The final result of my project was the shell client itself, a simple server and
+a selection of commands that understood the oosh data structures. I also wrote
+some simple scripts to demonstrate the power and flexibility of my design.
 
+(diagram of file layout)
+
+\section{Data Structures}
+My initial design was to have structured data pass through pipes between the
+commands, but this still left me with a variety of implementation
+possibilities. The data I wanted to manipulate turned out to fit a tabular
+format well, so my iterations focused on a representation of each line of data
+with labels. %unclear, clarify
+One of the initial ideas was to use an object oriented programming approach, so
+my first prototype % tracer code analogy from the pragmatic programmer?
+used an object which encapsulated this. However successive refactorings reduced
+this object to the point I was able to replace it entirely with Python {\tt
+  dict}s (the mapping structure primitive in Python).
+
+(example of some raw data)
+
+(example of same data pretty-printed)
+
+\section{Syntax}
+When I developed the first parts of Oosh I did not specify a grammar and simply
+modified the syntax as I went along. When I implemented a full interpreter I
+formalised the syntax I had developed. This approach enabled me to experiment
+without having to radically restructure the code at each iteration.
+
+\subsection{Grammar}
+\begin{grammar}
+      [(colon){$::=$}]
+      [(semicolon){$|\,$}]
+      [(nonterminal){$\langle$}{$\rangle$}]
+      [(quote){}{}] % grim hack since ; has meaning so we use ";"
+<commands> : <commands>";" <commands>\\
+;commands NAMEDPIPE
+;<while>
+;<if>
+;<assign>
+;<for>
+;<command>
+;$\epsilon$
+
+<for> : for STRING in <values>";" do <commands>";" end
+
+<while> : while <command>";" do <commands>";" end
+
+<if> : if <command>";" do <commands>";" end\\
+;if <command>";" do <commands>";" else do <commands>";" end
+
+<assign> : set STRING <value>
+
+<command> : <simplecommand>\\
+;NAMEDPIPE <simplecommand>\\
+;MULTIPIPE <multicommand> PIPE <simplecommand>\\
+;MULTIPIPE <multicommand>
+
+<values> : <value> <values>
+;<value>
+
+<value> : STRING
+;VARIABLE
+;QUOTEDSTRING
+
+<simplecommand> : <values>
+;PIPE <simplecommand>
+    
+<multicommand> : <values>
+\end{grammar}
+
+\section{The Shell}
+The Oosh client is the largest piece of code % waffle
+and can function without a server. Basic command line interaction is provided by
+the {\tt cmd.Cmd} object in the standard Python library, so from the second
+commit to the codebase I had standalone code. % don't be chronological!
+
+Once the input has been lexed and parsed, the client recurses on the parse tree
+% (simplified) picture of parse tree needed
+and evalutes it. Within each pipeline % have pipelines been explained by this point?
+a {\tt PipePointer} is passed along to abstract away the actual location of the
+data. This enables the shell to use Unix pipes locally % would be good to benchmark this
+but still move data across the network as needed.
+
+\section{Networking}
+% need intro para
+
+The server is a very simple design, only permitting one user to interact at any
+one point. Using the client, the user specifies the location where he wishes
+commands to be run. Once the user has logged in to a remote server, the client
+will automatically initiate commands on the server. Since the client collects
+data on the users behalf we can send the data lazily.
+
+\section{Command Selection}
+
+\section{Example Scripts}
 % architecture
 %   -- snazzy pictures!
 % what does it do? how? why that way? what inputs? what outputs?
 
-% grammar:
-\begin{grammar}
-      [(colon){$::=$}]
-      [(semicolon)$|$]
-      [(nonterminal){$\langle$}{$\rangle$}]
-<commands> : <commands> SEMICOLON <commands>\\
-; commands NAMEDPIPE\\
-; <while>\\
-; <if>\\
-; <assign>\\
-; <for>\\
-; <command>\\
-; $\epsilon$\\
-
-<for> : FOR STRING IN <values> SEMICOLON DO <commands> SEMICOLON END
-
-<while> : WHILE <command> SEMICOLON DO <commands> SEMICOLON END
-
-<if> : IF <command> SEMICOLON DO <commands> SEMICOLON END\\
-; IF <command> SEMICOLON DO <commands> SEMICOLON ELSE DO <commands> SEMICOLON END
-
-<assign> : SET STRING <value>
-
-<command> : <simplecommand>
-NAMEDPIPE <simplecommand>
-MULTIPIPE <multicommand>
-MULTIPIPE <multicommand> PIPE <simplecommand>
-
-<values> : <value> <values>
-<value>
-
-<value> : STRING
-VARIABLE
-QUOTEDSTRING
-
-<simplecommand> : <values>
-<simplecommand> PIPE <simplecommand>
-    
-<multicommand> : <values>
-\end{grammar}
 
 % problems overcome:
 % 1. python documentation bugs (in regex IIRC)

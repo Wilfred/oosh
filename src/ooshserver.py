@@ -49,7 +49,9 @@ class OoshRequestHandler(socketserver.BaseRequestHandler):
             password = request[2]
             if address not in connected_machines:
                 if checklogin(username, password):
-                    connected_machines.append(address)
+                    # stop multiple people logging in and clobbering each
+                    # others' data
+                    connected_machines = [address]
                     self.request.send(b'success')
                 else:
                     self.request.send(b'Invalid password specified')
