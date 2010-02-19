@@ -29,7 +29,7 @@
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Title
+% Cover sheet
 
 
 \pagestyle{empty}
@@ -59,6 +59,7 @@ Churchill College \\
 
 \chapter*{Proforma}
 
+% fixme: wordcount at completion
 {\large
 \begin{tabular}{ll}
 Name:               & \bf Wilfred Hughes                       \\
@@ -76,12 +77,32 @@ by {\tt detex diss.tex | tr -cd '0-9A-Za-z $\tt\backslash$n' | wc -w}
 }
 \stepcounter{footnote}
 
-
 \section*{Original Aims of the Project}
+% fixme: check this is at most 100 words
+I planned to write a Unix shell from scratch in Python. It would differ from
+traditional shells by enforcing a data structure on data piped between processes,
+so programs can reason about data at a higher level. It would also enable
+transparent network access using a design that can minimise network traffic by
+reasoning about the commands used. Finally, the shell syntax would be simplified
+to minimise command length for common instructions.
 
 \section*{Work Completed}
+% fixme: check this is at most 100 words
+I created an interactive shell with support for a syntax I formally
+specified. This shell permits usage of both commands I have created and all Unix
+commands available, even interleaving them as the user wishes. The shell also
+offers a basic command history and pretty prints all structured data.
+
+I created a set of commands which understand the data structure I defined. These
+included commands which produce data, commands that manipulate data and an
+automatic graphing utility.
+
+For networking I created a server that permits users to log in and execute
+commands as if they were being run locally. The client then fetches data lazily
+from the server.
 
 \section*{Special Difficulties}
+None.
  
 \newpage
 \section*{Declaration}
@@ -124,16 +145,18 @@ purpose.
 \pagestyle{headings}
 
 \chapter{Introduction}
-% need to decide on capitalisation conventions for oosh, bash and fish
+% fixme: need to decide on capitalisation conventions for oosh, bash and fish
 My project was to create a Unix shell from scratch. This gave me the opportunity
 to re-evaluate design decisions made by previous shell developers. I therefore
 explored a design that made today's common shell tasks easier.
 
+I developed a data format which enforces a tabular structure on data produced by
+programs.
+
+I developed a server.
+
 % overview
 % why this solution?
-
-\section{Overview}
-Watch this space.
 
 
 \cleardoublepage
@@ -143,14 +166,15 @@ Watch this space.
 \section{Historical Motivations}
 The command line shell (henceforth \emph{shell}) is one of the earliest user
 interfaces in the history of computing, with recognisable shells having appeared
-by 1965 \cite{multics}on the Multics system. A shell offers the user a
+by 1965 \cite{multics} on the Multics system. A shell offers the user a
 convenient abstraction to interact with his system. He may perform common tasks
 using considerably shorter commands than using his programming language of
 choice. A shell scripting language, therefore, has always been an exchange of
 power for brevity.
 
 The original Bourne shell was a product of hacking and experimentation, so was
-never formally specified. Bash has pursued backwards compatibility.
+never formally specified. The most popular successor is Bash, which has pursued
+backwards compatibility.
 
 Today's shells are therefore optimised for common use cases that are
 outdated. They have ill-specified languages, making it hard for the user to
@@ -179,21 +203,36 @@ the interface for interactive usage. PowerShell cmdlets use a more verbose
 noun-verb naming scheme and the programmer is sometimes exposed to underlying
 Windows API for simple networking tasks.
 
+None of these existing solutions have support for transparent
+networking. Bash-like shells require the user to {\tt ssh} into the desired
+system, so building a pipeline with commands on varying hosts is
+non-trivial. PowerShell solutions are more heavyweight and vary for the cmdlet
+used. Some commands take a host as an argument whereas others take a network
+session object argument.
+
 \section{Requirements}
-I needed to create a shell that would be familiar to an experience shell
-user, so my shell should follow shell conventions where sensible. This shell
-would enable the user to transfer structured data through pipelines using
-familiar pipeline tools. It would also enable convenient network access and
-optimise network data flow where possible.
+I needed to create a shell that would be familiar to an experience shell user,
+so my shell should follow shell conventions where sensible. Any shell that hopes
+to be be useful for a majority of users must be compatible with existing Unix
+commands as there are simply too many to reimplement all of them for a new
+design. My shell therefore needed to support the commands already available on
+the user's system.
 
-In addition to the shell with its built-ins, I needed a selection of programs
-that understood the structured data and demonstrated its flexibility and
-versatility. Clearly with data in a tabular format, a set of commands that offer
-database-like commands would be both familiar to the user and powerful. Another
-clear advantage of structured data is the ability to draw graphs, so an
-automatic graphing facility was created.
+I also needed to develop a data structure that would enable my programs to
+process data at a higher level. With my desire to work with current programs and
+aiming to maintain useful shell metaphors, I needed to preserve the concept of a
+pipeline as far as possible. This meant local commands needed to use the POSIX
+pipe primitive when pipelines were local. Since I wished to support interleaving
+of my commands and other commands, I required a data structure that was
+transmitted as structured text.
 
-% needs more on optimisation
+With my data structure in place I needed a set of commands that would
+demonstrate the versatility of my design. This set needed to include commands
+that would produce structured data, commands that could manipulate this data and
+commands that would offer visualisations of this data.
+
+Finally, I wanted my shell to support a convenient network abstraction. This
+required a simple client/server architecture and lightweight syntax to support it.
 
 \section{Development Approach}
 Since my design aimed to build on traditional shell design, extending an
@@ -216,9 +255,10 @@ exploratory style of coding. My final grammar is in figure {\em foo} and was
 developed iteratively after researching the syntax used in bash and fish.
 
 Ultimately a mainstream shell is a very large body of code (for example, Bash
-4.1 contains over 140,000 lines of code) and so I could not hope to replicate all
+4.1 contains over 140,000 lines of C code) and so I could not hope to replicate all
 this functionality in the time available. My objective then became to produce a
 proof-of-concept shell that demonstrated the advantages of my design.
+
 % in bash directory ran $ find . -name '*.[ch]' | xargs wc -l
 
 
@@ -234,9 +274,6 @@ proof-of-concept shell that demonstrated the advantages of my design.
 % features, bash substantial body of code -- compatibilty unwanted, no hackable grammar
 % python offered cmd.py which is skeleton shell
 % networking easier in python, text manipulation particularly so
-
-From scratch. Git. Github. Python. Fairly exploratory. Fish-inspired
-grammar. Simplified system as proof of concept.
 
 Typical CLI commands are developed iteratively, which is why commands print
 their usage guidelines if used incorrectly. Pipeline saving allows the user to
@@ -294,15 +331,41 @@ used an object which encapsulated this. However successive refactorings reduced
 this object to the point I was able to replace it entirely with Python {\tt
   dict}s (the mapping structure primitive in Python).
 
-(example of some raw data)
+\subsection{Data Example}
+\subsubsection{Raw Data}
+\begin{verbatim}
+{'Owner': 'wilfred', 'Size': 1013234, 'Filename': 'uucp-1.07.tar.gz'}
+{'Owner': 'wilfred', 'Size': 1152997, 'Filename': 'fish-1.23.1.tar.gz'}
+{'Owner': 'wilfred', 'Size': 1837, 'Filename': 'smlnj.tar.gz'}
+{'Owner': 'wilfred', 'Size': 2480099, 'Filename': 'plasma-weather-0.4.tar.gz'}
+{'Owner': 'wilfred', 'Size': 6598300, 'Filename': 'bash-4.1.tar.gz'}
+{'Owner': 'wilfred', 'Size': 196529, 'Filename': 'xwrits-2.26.tar.gz'}
+{'Owner': 'wilfred', 'Size': 2334185, 'Filename': 'ttf-sil-gentium_1.0.2.tar.gz'}
+{'Owner': 'wilfred', 'Size': 151881435, 'Filename': 'sheevaplug-installer-v1.0.tar.gz'}
+\end{verbatim}
 
-(example of same data pretty-printed)
+\subsubsection{Pretty Print Output}
+% fixme: need to emulate shell colouring
+% fixme: discuss character perfect print, unifying disparate data, relation to
+% pipe saving
+\begin{verbatim}
+Filename                         Owner   Size      
+uucp-1.07.tar.gz                 wilfred 1013234   
+fish-1.23.1.tar.gz               wilfred 1152997   
+smlnj.tar.gz                     wilfred 1837      
+plasma-weather-0.4.tar.gz        wilfred 2480099   
+bash-4.1.tar.gz                  wilfred 6598300   
+xwrits-2.26.tar.gz               wilfred 196529    
+ttf-sil-gentium_1.0.2.tar.gz     wilfred 2334185   
+sheevaplug-installer-v1.0.tar.gz wilfred 151881435
+\end{verbatim}
 
 \section{Syntax}
 When I developed the first parts of Oosh I did not specify a grammar and simply
-modified the syntax as I went along. When I implemented a full interpreter I
-formalised the syntax I had developed. This approach enabled me to experiment
-without having to radically restructure the code at each iteration.
+modified the syntax that the prototype accepted as I went along. When I
+implemented a full interpreter I formalised the syntax I had developed. This
+approach enabled me to experiment without having to radically restructure the
+code at each iteration.
 
 \subsection{Grammar}
 \begin{grammar}
@@ -369,13 +432,18 @@ will automatically initiate commands on the server. Since the client collects
 data on the users behalf we can send the data lazily.
 
 \section{Command Selection}
+In addition to the shell with its built-ins, I needed a selection of programs
+that understood the structured data and demonstrated its flexibility and
+versatility. Clearly with data in a tabular format, a set of commands that offer
+database-like commands would be both familiar to the user and powerful. Another
+clear advantage of structured data is the ability to draw graphs, so an
+automatic graphing facility was created.
 
 \section{Example Scripts}
-% architecture
 %   -- snazzy pictures!
 % what does it do? how? why that way? what inputs? what outputs?
 
-
+\section{Problems Overcome}
 % problems overcome:
 % 1. python documentation bugs (in regex IIRC)
 % 2. python 2 library compatibility
@@ -399,7 +467,7 @@ data on the users behalf we can send the data lazily.
 % comparing against requirements
 
 \cleardoublepage
-\chapter{Conclusion}
+\chapter{Conclusions}
 
 % aims again
 % accomplishments -- likes, dislikes, results
