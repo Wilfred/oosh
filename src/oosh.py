@@ -7,6 +7,7 @@ import readline # use the python history facilities
 import re # regular expressions
 import sys
 import socket
+import time # for time built-in
 
 from ooshparse import parser
 
@@ -90,14 +91,21 @@ class Oosh(Cmd):
         self.command_count = 1
 
     def onecmd(self, line):
+        # hook from cmd.py, called for each line entered by user
         self.command_count += 1
         self.prompt = str(self.command_count) + '$ '
 
         self.set_colour('white')
-        # hook from cmd, called for each line entered by user
         if line.strip(' \t\n') == '':
             self.set_colour('red')
             return
+
+        start_time = time.time()
+        timing = False
+        if len(line) > 4 and line[0:4] == 'time':
+            timing = True
+            line = line[5:] # strip 'time' to give the actual command
+
         ast = parser.parse(line)
         # print("AST: ", ast)
         try:
@@ -105,6 +113,10 @@ class Oosh(Cmd):
             self.print_pipe(stdout)
         except OoshError as error:
             print(error.message)
+
+        if timing:
+            self.set_colour('purple')
+            print("Time taken to run command {0} seconds".format(time.time()-start_time))
         self.set_colour('red')
 
     def print_pipe(self, pipe_pointer):

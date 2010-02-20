@@ -343,6 +343,7 @@ this object to the point I was able to replace it entirely with Python {\tt
 {'Owner': 'wilfred', 'Size': 2334185, 'Filename': 'ttf-sil-gentium_1.0.2.tar.gz'}
 {'Owner': 'wilfred', 'Size': 151881435, 'Filename': 'sheevaplug-installer-v1.0.tar.gz'}
 \end{verbatim}
+Note we have rudimentary types here, distinguishing between strings and integers.
 
 \subsubsection{Pretty Print Output}
 % fixme: need to emulate shell colouring
@@ -439,6 +440,17 @@ database-like commands would be both familiar to the user and powerful. Another
 clear advantage of structured data is the ability to draw graphs, so an
 automatic graphing facility was created.
 
+I examined the selection of commands offered by BusyBox, as it aims to be a
+fairly minimal set of Unix commands required to make a system useful. Many
+commands were either interactive, set system settings or started daemons. None
+of these programs sent sufficient data to stdout for them to benefit from my
+new structure data approach.
+
+% fixme: needs to flow into next section
+
+\subsubsection{Data Sources}
+I implemented 
+
 \section{Example Scripts}
 %   -- snazzy pictures!
 % what does it do? how? why that way? what inputs? what outputs?
@@ -454,7 +466,17 @@ automatic graphing facility was created.
 \cleardoublepage
 
 \chapter{Evaluation}
+To evaluate the expressive power of commands within Oosh, I have prepared a
+selection of character count comparisons. I also include some data on the
+number of processes spawned between a typical Bash command and a typical Oosh
+command.
 
+I have also collected a set of networking benchmarks, which measure the
+effectiveness of my bandwidth optimisations versus a na\:ive implementation. I
+measure both networking overhead and scaling.
+
+Finally, I also include some simple performance benchmarks based on system
+resource consumption and latency from the user's perspective.
 % what was evaluated?
 % what were the results?
 %   -- no of processes spawned

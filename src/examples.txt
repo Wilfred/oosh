@@ -8,7 +8,7 @@ oosh_ls | oosh_project Filename Size | oosh_sort Size
 
 # graphing, bar and pie
 oosh_ps | oosh_select User wilfred | oosh_graph bar Command 'CPU %' snazzy_graph.svg
- 
+
 # networking, showing neat interleaving of custom and standard CLI tools
 connect@127.0.0.1 username password;
 oosh_ls@127.0.0.1 /home/wilfred/music | grep mp3
