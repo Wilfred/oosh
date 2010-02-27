@@ -6,6 +6,7 @@ import oosh
 from oosh import OoshError
 import re
 import subprocess
+import socket
 
 user_logins = {'wilfred':('6f5902ac23', 'f21627d3faf150060b0b2cb3902c05ef2fdda3ae')}
 connected_machines = []
@@ -112,6 +113,9 @@ if __name__ == "__main__":
 
     # Create the server, binding to localhost on port 12345
     server = socketserver.TCPServer((HOST, PORT), OoshRequestHandler)
+    name = socket.getfqdn()
+    ip = socket.gethostbyname(socket.gethostname())
+    print("Starting server at {0} ({1}) on port {2}".format(name, ip, PORT))
 
     # Activate the server; this will keep running until you
     # interrupt the program with Ctrl-C

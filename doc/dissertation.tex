@@ -66,19 +66,14 @@ Name:               & \bf Wilfred Hughes                       \\
 College:            & \bf Churchill College                     \\
 Project Title:      & \bf oosh: An object oriented shell \\
 Examination:        & \bf Computer Science Part II, 2009-2010        \\
-Word Count:         & \bf 1587\footnotemark[1] \\
+Word Count:         & \bf 1587 \\
 Project Originator: & \bf Wilfred Hughes                    \\
 Supervisor:         & \bf David Eyers                    \\ 
 \end{tabular}
 }
 
-\footnotetext[1]{This word count was computed
-by {\tt detex diss.tex | tr -cd '0-9A-Za-z $\tt\backslash$n' | wc -w}
-}
-\stepcounter{footnote}
-
 \section*{Original Aims of the Project}
-% fixme: check this is at most 100 words
+% 72 words
 I planned to write a Unix shell from scratch in Python. It would differ from
 traditional shells by enforcing a data structure on data piped between processes,
 so programs can reason about data at a higher level. It would also enable
@@ -87,11 +82,10 @@ reasoning about the commands used. Finally, the shell syntax would be simplified
 to minimise command length for common instructions.
 
 \section*{Work Completed}
-% fixme: check this is at most 100 words
-I created an interactive shell with support for a syntax I formally
-specified. This shell permits usage of both commands I have created and all Unix
-commands available, even interleaving them as the user wishes. The shell also
-offers a basic command history and pretty prints all structured data.
+% fixme: less than 100 words, but proforma cannot exceed one page
+I created an interactive shell with support for both new data-aware commands and
+traditional Unix commands. It also offers a basic command history and pretty
+prints all structured data.
 
 I created a set of commands which understand the data structure I defined. These
 included commands which produce data, commands that manipulate data and an
@@ -145,15 +139,18 @@ purpose.
 \pagestyle{headings}
 
 \chapter{Introduction}
-% fixme: need to decide on capitalisation conventions for oosh, bash and fish
+% capitalisation conventions: Oosh, Bash, fish
 My project was to create a Unix shell from scratch. This gave me the opportunity
 to re-evaluate design decisions made by previous shell developers. I therefore
 explored a design that made today's common shell tasks easier.
 
 I developed a data format which enforces a tabular structure on data produced by
-programs.
+programs. To demonstrate the versatility of this design I created a number of
+programs that could produce or manipulate this data format.
 
-I developed a server.
+Networking tasks are more common than ever, so my new design needed to include a
+convenient networking abstraction. I developed a simple client/server
+architecture that uses lazy data transfers to minimise bandwidth.
 
 % overview
 % why this solution?
@@ -179,7 +176,7 @@ backwards compatibility.
 Today's shells are therefore optimised for common use cases that are
 outdated. They have ill-specified languages, making it hard for the user to
 exercise confidence in preparing scripts---indeed, even implementing
-\texttt{sh}-compatible behaviour is non-trivial.
+\texttt{sh}-compatible behaviour is non-trivial\cite{bourne}.
 
 I revisited these assumptions. \texttt{who | wc} is not supported by the
 original grammar, and pipes are an early (but not an original) feature. How can
@@ -191,9 +188,12 @@ original shell formulation?
 I evaluated several well-known shells available today. One of the most popular
 options is Bash, which is the default on GNU/Linux and Mac OS X.
 
-A more recent alternative to Bash is Fish, the Friendly Interactive Shell. Fish
-is not a substantial departure from Bash, but breaks backwards compatibility to
-simplify the scripting language it accepts.
+A more recent alternative to Bash is the Friendly Interactive Shell (`fish'),
+released in 2005. fish is not a substantial departure from Bash, but breaks
+backwards compatibility. The design of fish\cite{fishdesign} is motivated by a
+desire to create a minimal, orthogonal scripting language. While it achieves
+these goals it still requires the user to perform dumb manipulations on
+unstructured text.
 
 Another recent development is PowerShell, a Microsoft scripting language and
 shell released in 2006. PowerShell is a more radical departure from traditional
@@ -201,7 +201,7 @@ shell design, offering an object-oriented approach. Whilst this offers an
 increase in expressive power, the PowerShell design does not seek to optimise
 the interface for interactive usage. PowerShell cmdlets use a more verbose
 noun-verb naming scheme and the programmer is sometimes exposed to underlying
-Windows API for simple networking tasks.
+Windows API for simple tasks such as basic networking.
 
 None of these existing solutions have support for transparent
 networking. Bash-like shells require the user to {\tt ssh} into the desired
@@ -211,6 +211,8 @@ used. Some commands take a host as an argument whereas others take a network
 session object argument.
 
 \section{Requirements}
+% pipe saving: users develop iteratively, so let them save output so far. more minimal,
+% more hidden, less confusing
 I needed to create a shell that would be familiar to an experience shell user,
 so my shell should follow shell conventions where sensible. Any shell that hopes
 to be be useful for a majority of users must be compatible with existing Unix
@@ -218,6 +220,7 @@ commands as there are simply too many to reimplement all of them for a new
 design. My shell therefore needed to support the commands already available on
 the user's system.
 
+% used a data structure that was line based for compatibility
 I also needed to develop a data structure that would enable my programs to
 process data at a higher level. With my desire to work with current programs and
 aiming to maintain useful shell metaphors, I needed to preserve the concept of a
@@ -238,7 +241,7 @@ required a simple client/server architecture and lightweight syntax to support i
 Since my design aimed to build on traditional shell design, extending an
 existing shell was an option worth considering, particularly since most Unix
 shells are available under an open-source lincense. I investigated building on
-top of Bash or Fish, but both of these were substantial pieces of C code, most
+top of Bash or fish, but both of these were substantial pieces of C code, most
 of which would require major changes to work with my intended features. I
 concluded that starting afresh was my best option.
 
@@ -255,12 +258,16 @@ exploratory style of coding. My final grammar is in figure {\em foo} and was
 developed iteratively after researching the syntax used in bash and fish.
 
 Ultimately a mainstream shell is a very large body of code (for example, Bash
-4.1 contains over 140,000 lines of C code) and so I could not hope to replicate all
+4.1 contains over 140,000 lines of C code\footnotemark[1]) and so I could not hope to replicate all
 this functionality in the time available. My objective then became to produce a
 proof-of-concept shell that demonstrated the advantages of my design.
 
 % in bash directory ran $ find . -name '*.[ch]' | xargs wc -l
 
+\footnotetext[1]{Calculated by running {\tt find . -name '*.[ch]' | xargs wc -l}
+  on the source code of Bash 4.1.
+}
+\stepcounter{footnote}
 
 % features:
 % n/w optimisation
@@ -302,10 +309,6 @@ is exported to invoked processes to handle instead.
 % distributed with the Seventh Edition of Unix is so far off that it does not
 % allow the command who|wc. In fact, as Tom Duff states:
 
-% “Nobody really knows what the Bourne shell's grammar is. Even examination of
-% the source code is little help.” -- Tom Duff, “Rc-A Shell for Plan 9 and UNIX
-% systems”, Proc. of the Summer 1990 EUUG Conf., London, July, 1990, pp. 21-33
-
 % The POSIX.2 standard includes a yacc grammar that comes close to capturing the
 % Bourne shell's behavior, but it disallows some constructs which sh accepts
 % without complaint-and there are scripts out there that use them.
@@ -319,31 +322,53 @@ some simple scripts to demonstrate the power and flexibility of my design.
 
 (diagram of file layout)
 
+In appendix \ref{examples} I give an example of an Oosh session, which
+gives concrete examples and their resulting output. This should clarify how
+these techniques work in practice.
+
 \section{Data Structures}
 My initial design was to have structured data pass through pipes between the
 commands, but this still left me with a variety of implementation
 possibilities. The data I wanted to manipulate turned out to fit a tabular
 format well, so my iterations focused on a representation of each line of data
 with labels. %unclear, clarify
+
 One of the initial ideas was to use an object oriented programming approach, so
 my first prototype % tracer code analogy from the pragmatic programmer?
 used an object which encapsulated this. However successive refactorings reduced
 this object to the point I was able to replace it entirely with Python {\tt
   dict}s (the mapping structure primitive in Python).
 
+My final design separates lines of structured data with the newline character in
+the text stream. This enables the interleaving of existing Unix commands and
+Oosh commands whilst still preserving the data format. The examples in sections
+\ref{lsexample} and \ref{forexample} demonstrate this.
+
+\subsection{Pretty Printing}
+Since traditional Unix commands output data in an unstructured way, output forms
+vary widely. Since Oosh enforces its format, it naturally follows to spend more
+development time on an attractive pretty print that is run by the shell on all
+conformant data.
+
+The pretty print functionality I developed is coloured, uses character-perfect
+layout and supports heterogeneous lines of data. This ensures that each column
+is printed at optimum width dependent on the length of the entries. The
+disadvantage of this approach is that each pipeline must finish producing data
+before any of it is visible to the user.
+
 \subsection{Data Example}
 \subsubsection{Raw Data}
+% fixme: fix incorrect quoting in output
 \begin{verbatim}
 {'Owner': 'wilfred', 'Size': 1013234, 'Filename': 'uucp-1.07.tar.gz'}
 {'Owner': 'wilfred', 'Size': 1152997, 'Filename': 'fish-1.23.1.tar.gz'}
 {'Owner': 'wilfred', 'Size': 1837, 'Filename': 'smlnj.tar.gz'}
-{'Owner': 'wilfred', 'Size': 2480099, 'Filename': 'plasma-weather-0.4.tar.gz'}
 {'Owner': 'wilfred', 'Size': 6598300, 'Filename': 'bash-4.1.tar.gz'}
 {'Owner': 'wilfred', 'Size': 196529, 'Filename': 'xwrits-2.26.tar.gz'}
-{'Owner': 'wilfred', 'Size': 2334185, 'Filename': 'ttf-sil-gentium_1.0.2.tar.gz'}
-{'Owner': 'wilfred', 'Size': 151881435, 'Filename': 'sheevaplug-installer-v1.0.tar.gz'}
+{'Filename': 'plasma-weather-0.4.tar.gz', 'Size': 2480099}
 \end{verbatim}
-Note we have rudimentary types here, distinguishing between strings and integers.
+Note we have rudimentary types here, distinguishing between strings and
+integers.
 
 \subsubsection{Pretty Print Output}
 % fixme: need to emulate shell colouring
@@ -354,11 +379,9 @@ Filename                         Owner   Size
 uucp-1.07.tar.gz                 wilfred 1013234   
 fish-1.23.1.tar.gz               wilfred 1152997   
 smlnj.tar.gz                     wilfred 1837      
-plasma-weather-0.4.tar.gz        wilfred 2480099   
 bash-4.1.tar.gz                  wilfred 6598300   
 xwrits-2.26.tar.gz               wilfred 196529    
-ttf-sil-gentium_1.0.2.tar.gz     wilfred 2334185   
-sheevaplug-installer-v1.0.tar.gz wilfred 151881435
+plasma-weather-0.4.tar.gz        -       2480099
 \end{verbatim}
 
 \section{Syntax}
@@ -423,6 +446,8 @@ a {\tt PipePointer} is passed along to abstract away the actual location of the
 data. This enables the shell to use Unix pipes locally % would be good to benchmark this
 but still move data across the network as needed.
 
+\section{Pipe Saving}
+
 \section{Networking}
 % need intro para
 
@@ -472,7 +497,7 @@ number of processes spawned between a typical Bash command and a typical Oosh
 command.
 
 I have also collected a set of networking benchmarks, which measure the
-effectiveness of my bandwidth optimisations versus a na\:ive implementation. I
+effectiveness of my bandwidth optimisations versus a na\"{i}ve implementation. I
 measure both networking overhead and scaling.
 
 Finally, I also include some simple performance benchmarks based on system
@@ -496,18 +521,49 @@ resource consumption and latency from the user's perspective.
 % hindsight thoughts -- better approaches
 % future prospects
 
+Characterising typical shell usage is difficult. I believe I created a
+compelling product. Ultimately very complex shell interactions are often moved
+to standalone applications. % contrast Gentoo's build scripts, a distro (Debian?)
+                           % moving to C init scripts
+
+The shell is used for quick and dirty tasks, collecting debugging output, simple
+file manipulations. Spawning processes ({\tt /etc/init.d/apache start}) and
+hardware configuration ({\tt ifconfig}) are also common shell usages which
+neither networking convenience or structured data can offer any great
+improvement on. Pervasive use of this data structure would offer more
+interesting usages, one good example being the {\tt /sys} directory. Tab
+completion would be another interesting area to explore, since commands can know
+column names (e.g. column name tab completion on oosh\_sort). To be used in
+production, Oosh would need to have the remaining shell features added, such as
+regular expression support (easy exercise given Python's support). Subshells and
+subcommands would be useful to a real user, though not adding anything to the
+proof-of-concept design.
+
+% also problems with some data simply not being structured: apt-get upgrade,
+% wget, sophisticated interfaces: nano, emacs, irssi, lynx
+
 \cleardoublepage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the bibliography
 
 \addcontentsline{toc}{chapter}{Bibliography}
-\begin{thebibliography}{1} % at most one citation
+\begin{thebibliography}{5} % at most 5 citations
 
 \bibitem{multics}
   Louis Pouzin
   \emph{Multics: The Origin of the Shell}
   http://www.multicians.org/shell.html
+
+\bibitem{bourne}
+  Tom Duff
+  \emph{Rc -- A Shell for Plan 9 and UNIX systems}
+  http://doc.cat-v.org/plan\_9/4th\_edition/papers/rc
+
+\bibitem{fishdesign}
+  Axel Liljencrantz
+  \emph{Design Document}
+  http://fishshell.org/user\_doc/design.html
 
 \end{thebibliography}
 \cleardoublepage
@@ -515,6 +571,88 @@ resource consumption and latency from the user's perspective.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the appendices
 \appendix
+
+\chapter{Example Usage}
+\label{examples}
+% populated from src/examples.txt
+
+\section{Simple Pipeline}
+\label{lsexample}
+A simple pipeline showing contextual data manipulation. Note tail is a part of
+GNU coreutils and is working in Oosh without modification.
+\begin{verbatim}
+1$ oosh_ls /usr/bin | oosh_project Filename Size | oosh_sort Size | tail
+Filename Size
+mencoder 10984340
+inkview  11074508
+inkscape 11100236
+mplayer  11758932
+bibtexu  17312116
+xetex    17799216
+xelatex  17799216
+skype    18567888
+\end{verbatim}
+
+\section{Networking}
+Connect to a server, run commands on it as if they are local commands. Also
+demonstrates reuse of semicolon for command sequences as found on other common
+shells.
+\begin{verbatim}
+2$ connect@193.60.95.74 wilfred mypassword;
+     oosh_ls@193.60.95.74 /home/wilfred/logs | grep kde
+Filename               Owner   Size
+freenode_#kde-i18n.log wilfred 879
+freenode_#kde.log      wilfred 53318
+\end{verbatim}
+
+Note grep is run on the server despite not specifying. Also note the output of
+{\tt oosh\_ls} is not sent immediately, the client only requests it to be sent at
+the end.
+\begin{verbatim}
+$ ./ooshserver.py
+Starting server at soup.linux.pwf.cam.ac.uk (193.60.95.74) on port 12345
+request is ['connect', 'wilfred', mypassword']
+request is ['command', 'python3', 'oosh_ls.py', '/home/wilfred/logs']
+request is ['command', 'grep', 'kde']
+request is ['send']
+\end{verbatim}
+
+\section{Control structures}
+\label{forexample}
+An example of the familiar command structures available in Oosh. The {\tt for}
+loop syntax is based on that of fish.
+\begin{verbatim}
+3$ for x in 131.111.8.42 131.111.12.20 131.111.131.1; do ping $x -c 1; end
+PING 131.111.8.42 (131.111.8.42) 56(84) bytes of data.
+64 bytes from 131.111.8.42: icmp_seq=1 ttl=252 time=0.400 ms
+
+--- 131.111.8.42 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.400/0.400/0.400/0.000 ms
+PING 131.111.12.20 (131.111.12.20) 56(84) bytes of data.
+64 bytes from 131.111.12.20: icmp_seq=1 ttl=252 time=0.433 ms
+
+--- 131.111.12.20 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.433/0.433/0.433/0.000 ms
+PING 131.111.131.1 (131.111.131.1) 56(84) bytes of data.
+64 bytes from 131.111.131.1: icmp_seq=1 ttl=63 time=0.338 ms
+
+--- 131.111.131.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.338/0.338/0.338/0.000 ms
+\end{verbatim}
+
+\section{Multi-way Pipes}
+Here we see an example of pipelines being saved. We also see an Oosh command
+that takes multiple input pipes.
+\begin{verbatim}
+4$ oosh_ps |1; sleep 1m; oosh_ps |2; |1+2 oosh_difference
+Command CPU % Memory % PID  User
+python3 0.0   0.3      6081 wilfred
+sh      0.0   0.0      6082 wilfred
+ps      0.0   0.0      6083 wilfred
+\end{verbatim}
 
 \chapter{References}
 
