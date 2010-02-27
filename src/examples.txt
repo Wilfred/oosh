@@ -1,10 +1,12 @@
 # these are tests more than demonstrations of usefulness
 # would be better as a unit test
 
-ls # basic, calls already existing commands
+# basic, calls already existing commands
+ls
+man ls
 
-# new commands, piping
-oosh_ls | oosh_project Filename Size | oosh_sort Size
+# new commands, piping, using standard unix commands
+oosh_ls /usr/bin | oosh_project Filename Size | oosh_sort Size | head
 
 # graphing, bar and pie
 oosh_ps | oosh_select User wilfred | oosh_graph bar Command 'CPU %' snazzy_graph.svg

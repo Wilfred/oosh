@@ -109,8 +109,7 @@ class Oosh(Cmd):
         ast = parser.parse(line)
         # print("AST: ", ast)
         try:
-            (stdout, return_code) = self.eval(ast, PipePointer())
-            self.print_pipe(stdout)
+            self.eval(ast)
         except OoshError as error:
             print(error.message)
 
@@ -177,7 +176,15 @@ class Oosh(Cmd):
                 line_text += datum + ' '*(column_widths[key]-len(datum)+1)
             print(line_text)
 
-    def eval(self, ast, pipe_pointer):
+    def eval(self, ast):
+        self.output_for_user = []
+        (final_pipe, return_code) = self.eval_tree(ast, PipePointer())
+        self.output_for_user.append(final_pipe)
+
+        for pipe in self.output_for_user:
+            self.print_pipe(pipe)
+
+    def eval_tree(self, ast, pipe_pointer):
         # recurse down tree, starting processes and passing pointers
         # of pipes created as appopriate.
 
@@ -188,12 +195,12 @@ class Oosh(Cmd):
             return (PipePointer(), 0)
 
         if ast[0] == 'sequence':
-            (stdout, returncode) = self.eval(ast[1], PipePointer())
-            self.print_pipe(stdout)
-            return self.eval(ast[2], PipePointer())
+            (stdout, returncode) = self.eval_tree(ast[1], PipePointer())
+            self.output_for_user.append(stdout)
+            return self.eval_tree(ast[2], PipePointer())
 
         elif ast[0] == 'savepipe':
-            (pipe_out, return_code) = self.eval(ast[1], PipePointer())
+            (pipe_out, return_code) = self.eval_tree(ast[1], PipePointer())
             pipe_number = ast[2][1:]
             self.saved_pipe_data[pipe_number] = pipe_out.read()
             return (PipePointer(), return_code)
@@ -202,31 +209,31 @@ class Oosh(Cmd):
             old_variables = self.variables.copy()
             for value in self.flatten_tree(ast[2]):
                 self.variables[ast[1]] = value
-                (stdout, return_code) = self.eval(ast[3], PipePointer())
-                self.print_pipe(stdout)
+                (stdout, return_code) = self.eval_tree(ast[3], PipePointer())
+                self.output_for_user.append(stdout)
             self.variables = old_variables
             return (PipePointer(), return_code)
 
         elif ast[0] == 'while':
             while return_code == 0:
-                (dont_care, return_code) = self.eval(ast[1], PipePointer())
-                (stdout, final_return_code) = self.eval(ast[2], PipePointer())
-                self.print_pipe(stdout)
+                (dont_care, return_code) = self.eval_tree(ast[1], PipePointer())
+                (stdout, final_return_code) = self.eval_tree(ast[2], PipePointer())
+                self.output_for_user.append(stdout)
             return (PipePointer(), final_return_code)
 
         elif ast[0] == 'if':
-            (stdout, return_code) = self.eval(ast[1], PipePointer())
+            (stdout, return_code) = self.eval_tree(ast[1], PipePointer())
             if return_code == 0: # 0 is true for shells
-                return self.eval(ast[2], PipePointer())
+                return self.eval_tree(ast[2], PipePointer())
             else:
                 return (PipePointer(), 0)
 
         elif ast[0] == 'if-else':
-            (stdout, return_code) = self.eval(ast[1], PipePointer())
+            (stdout, return_code) = self.eval_tree(ast[1], PipePointer())
             if return_code == 0:
-                return self.eval(ast[2], PipePointer())
+                return self.eval_tree(ast[2], PipePointer())
             else:
-                return self.eval(ast[3], PipePointer())
+                return self.eval_tree(ast[3], PipePointer())
 
         elif ast[0] == 'assign':
             self.variables[ast[1]] = self.flatten_tree(ast[2])[0]
@@ -239,7 +246,7 @@ class Oosh(Cmd):
             try:
                 old_pipe_data = self.saved_pipe_data[old_pipe_name]
                 old_pipe_pointer = self.pipe_from_data(old_pipe_data)
-                return self.eval(ast[2], PipePointer(old_pipe_pointer))
+                return self.eval_tree(ast[2], PipePointer(old_pipe_pointer))
             except KeyError:
                 raise OoshError("You have not saved a pipe numbered " +
                                 old_pipe_name)
@@ -268,8 +275,8 @@ class Oosh(Cmd):
             return self.shell_command(command, PipePointer(first_pipe_pointer))
 
         elif ast[0] == 'pipedcommand':
-            (stdout, return_code) = self.eval(ast[1], pipe_pointer)
-            return self.eval(ast[2], stdout)
+            (stdout, return_code) = self.eval_tree(ast[1], pipe_pointer)
+            return self.eval_tree(ast[2], stdout)
 
         elif ast[0] is None: # occurs with trailing ;
             pass
@@ -284,7 +291,6 @@ class Oosh(Cmd):
                         stdout=subprocess.PIPE)
         process.stdin.write(pipe_data)
         process.stdin.close()
-        process.wait()
         return process.stdout
 
     def decide_command_location(self, command_name, stdin):
@@ -383,7 +389,6 @@ class Oosh(Cmd):
                     # last command was local, next is local
                     process = subprocess.Popen(command, stdin=stdin.reader,
                                                stdout=subprocess.PIPE)
-                    process.wait()
                     return (PipePointer(process.stdout), process.returncode)
                 else:
                     # last command was remote, next is local
@@ -391,7 +396,6 @@ class Oosh(Cmd):
                     new_pipe = self.pipe_from_data(remote_data)
                     process = subprocess.Popen(command, stdin=new_pipe,
                                                stdout=subprocess.PIPE)
-                    process.wait()
                     return (PipePointer(process.stdout), process.returncode)
         except OSError:
             raise OoshError("No such command: " + command_name)
