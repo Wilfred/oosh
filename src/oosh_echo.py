@@ -1,10 +1,11 @@
-if __name__=='__main__':
-    from oosh import Droplet
-
-# echo: return a single droplet of data as given as arguments
+# echo: return a single line of data as given by arguments
 import sys
 
 args = sys.argv[1:]
-droplet = Droplet(''.join(args))
+pairs = []
+for i in range(0, len(args), 2):
+    pairs.append((args[i],args[i+1]))
+
+droplet = dict(pairs)
 sys.stdout.write(droplet.__repr__())
 sys.stdout.write('\n')

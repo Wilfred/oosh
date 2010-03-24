@@ -1,6 +1,3 @@
-if __name__=='__main__':
-    from oosh import Droplet
-
 # ps: list running processes on this system
 import subprocess
 import sys

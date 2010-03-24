@@ -433,34 +433,6 @@ class Oosh(Cmd):
         elif colour == 'purple':
             sys.stdout.write('\033[1;35m')
 
-# an object stream is made of droplets
-class Droplet:
-    def __init__(self, value):
-        if isinstance(value, str):
-            self.entries = parse(value)
-        elif isinstance(value, list):
-            self.entries = dict(value)
-        elif isinstance(value, dict):
-            self.entries = value
-        else:
-            raise TypeError
-    def __eq__(self, other):
-        return self.entries == other.entries
-    def __repr__(self):
-        return self.entries.__repr__()
-
-# helper functions:
-def parse(ooshstring):
-    # values always take the form "name":"value", tolerating
-    # newlines but we escape ""
-    keyandvalue = re.findall('".*?":".*?"', ooshstring,
-                             flags=re.DOTALL)
-    # strip leading and trailng "
-    stripped = [s[1:][:-1] for s in keyandvalue]
-     # separate into column name, value pairs
-    pairs = [s.split('":"') for s in stripped]
-    return dict(pairs)
-
 def get_from_pipe(pipein):
     output = []
     for value in pipein:
