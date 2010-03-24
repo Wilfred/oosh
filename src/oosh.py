@@ -122,7 +122,8 @@ class Oosh(Cmd):
         # read and decode binary data in stdout
         if not pipe_pointer is None:
             content = pipe_pointer.read().decode()
-            if len(content) > 0 and content[0] == '{': 
+            if (len(content) > 0 and content[0] == '{' 
+                and 'noprint' not in debug_flags): 
                 # data conforms to oosh structure
                 self.pretty_print(content)
             else:
@@ -470,6 +471,8 @@ def get_from_pipe(pipein):
     return output
 
 if __name__=='__main__':
+    global debug_flags
+    debug_flags = sys.argv[1:]
     oosh = Oosh()
     oosh.set_colour('red')
     oosh.prompt = "1$ "
