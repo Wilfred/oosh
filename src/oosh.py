@@ -287,6 +287,7 @@ class Oosh(Cmd):
     def pipe_from_data(self, pipe_data):
         # this is not beautiful code, we use cat just to create a new
         # pipe (cf 'useless use of cat')
+        # known bug: this blocks with large amounts of data
         process = subprocess.Popen('cat', stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE)
         process.stdin.write(pipe_data)

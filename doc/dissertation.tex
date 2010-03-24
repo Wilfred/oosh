@@ -346,13 +346,29 @@ Oosh commands whilst still preserving the data format. The examples in sections
 
 \subsection{Pretty Printing}
 Since traditional Unix commands output data in an unstructured way, output forms
-vary widely. Since Oosh enforces its format, it naturally follows to spend more
-development time on an attractive pretty print that is run by the shell on all
-conformant data.
+vary widely. In contrast, Oosh enforces its format, so it naturally follows to
+spend more development time on an attractive pretty print that is run by the
+shell on all conformant data.
 
 The pretty print functionality I developed is coloured, uses character-perfect
 layout and supports heterogeneous lines of data. This ensures that each column
-is printed at optimum width dependent on the length of the entries. The
+is printed at optimum width dependent on the length of the
+entries. 
+
+The algorithm I designed takes lines of Oosh output as input and finds
+the optimum layout. This is $O(C \log C + CL)$ time, where $L$ is the
+number of lines, and $C$ the number of columns. I benchmark this
+later. %todo: add section number
+
+The disadvantage of my design is that it requires a line entered by
+the user to have finished being evaluated before anything is shown to
+the user. 
+
+% but by benchmark, even 50k producing data is acceptable
+% as discussed later, computational intensive tasks tend not to output
+% much to the screen anway
+
+The
 disadvantage of this approach is that each pipeline must finish producing data
 before any of it is visible to the user.
 
@@ -368,7 +384,7 @@ before any of it is visible to the user.
 {'Filename': 'plasma-weather-0.4.tar.gz', 'Size': 2480099}
 \end{verbatim}
 Note we have rudimentary types here, distinguishing between strings and
-integers.
+integers. The sort commands in Oosh take advantage of this.
 
 \subsubsection{Pretty Print Output}
 % fixme: need to emulate shell colouring
@@ -434,28 +450,92 @@ code at each iteration.
 \end{grammar}
 
 \section{The Shell}
-The Oosh client is the largest piece of code % waffle
-and can function without a server. Basic command line interaction is provided by
-the {\tt cmd.Cmd} object in the standard Python library, so from the second
-commit to the codebase I had standalone code. % don't be chronological!
+The Oosh client is the largest single piece of code and can function without a
+server. Basic command line interaction is provided by the {\tt cmd.Cmd} object
+in the standard Python library. This meant the shell had supported basic user
+interaction and command history from very early on, allowing me to test the
+system as a whole. I was then able to add functionality and complexity
+iteratively, with the code largely functional at any given point in time.
 
-Once the input has been lexed and parsed, the client recurses on the parse tree
+The shell itself takes input from the user on a line-by-line basis. Each line is
+lexed, parsed and the resulting parse tree is evaluated.
+
 % (simplified) picture of parse tree needed
-and evalutes it. Within each pipeline % have pipelines been explained by this point?
+Within each pipeline % have pipelines been explained by this point?
 a {\tt PipePointer} is passed along to abstract away the actual location of the
 data. This enables the shell to use Unix pipes locally % would be good to benchmark this
 but still move data across the network as needed.
 
 \section{Pipe Saving}
+A common way of using today's shells is to iteratively write instructions. A
+system administrator, trying to fix a KDE application, may build up a Bash command as
+follows:
+% fixme: better as figures?
+\begin{verbatim}
+$ ls /usr/lib
+$ diff /backup/20100120/usr/lib /usr/lib
+$ diff /backup/20100120/usr/lib /usr/lib | grep libkde
+\end{verbatim}
+
+In this example he is repeatedly reading /usr/lib. Each command rereads from
+this folder unnecessarily. As the command gets longer he is no longer interested in
+the earlier processes. The solution here is to allow him to save this data so
+that he can access it again later, whilst only worrying about the current filter
+operations he is performing. In Oosh this would become:
+
+\begin{verbatim}
+$ oosh_ls /usr/lib |1
+$ oosh_ls /backup/20100120/usr/lib |2
+$ |1+2 oosh_difference |3
+$ |3 grep libkde
+\end{verbatim}
+
+The user is now able to reason about previously generated data in a simpler
+manner. He can also refer back to previously generated results even if he cannot
+generate the data again. Whilst in the first case % or refer to figures
+the user can use output redirection to save the output of {\tt ls} and {\tt
+  diff}. However the Bash redirection syntax is less concise, so the commands
+still cannot be made as short (and therefore as readable) % need to justify
+as the Oosh commands.
 
 \section{Networking}
 % need intro para
+
+The networking functionality was designed with two intentions: a concise,
+convenient syntax and efficient bandwith usage. Today a user can use Bash and
+SSH to run commands remotely, but running successive commands on different
+systems is not covenient.
+
+% collect data remotely, analyse locally
+\begin{verbatim}
+home$ ssh wilfred@remote.com
+remote$ ps > /tmp/ps.txt
+remote$ exit
+Connection to remote.com closed.
+home$ scp wilfred@remote.com:/tmp/ps.txt .
+home$ grep root <ps.txt 
+\end{verbatim}
+
+% sadly grep is moved to remote, need better example
+\begin{verbatim}
+$ connect@remote.com wilfred password
+$ ps@remote.com | grep root
+\end{verbatim}
+
+After extending the Oosh syntax % nb. not in grammar specification
+to allow this simple location specification, I required a server/client
+architecture that would enable the user to run remote commands from his Oosh
+client as if they were local.
 
 The server is a very simple design, only permitting one user to interact at any
 one point. Using the client, the user specifies the location where he wishes
 commands to be run. Once the user has logged in to a remote server, the client
 will automatically initiate commands on the server. Since the client collects
 data on the users behalf we can send the data lazily.
+
+The server supports the following commands:
+% would be good to have send to other server
+
 
 \section{Command Selection}
 In addition to the shell with its built-ins, I needed a selection of programs
@@ -541,6 +621,7 @@ proof-of-concept design.
 
 % also problems with some data simply not being structured: apt-get upgrade,
 % wget, sophisticated interfaces: nano, emacs, irssi, lynx
+% line continuations would be nice too
 
 \cleardoublepage
 
