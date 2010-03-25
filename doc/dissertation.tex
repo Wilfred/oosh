@@ -7,6 +7,8 @@
 % for pretty printing grammar in BNF
 \usepackage{bnf}
 
+\usepackage{graphicx}
+
 \input{epsf}                            % to allow postscript inclusions
 % On thor and CUS read top of file:
 %     /opt/TeX/lib/texmf/tex/dvips/epsf.sty
@@ -368,9 +370,7 @@ the user.
 % as discussed later, computational intensive tasks tend not to output
 % much to the screen anway
 
-The
-disadvantage of this approach is that each pipeline must finish producing data
-before any of it is visible to the user.
+% nice example would be to show that tail does not remove the table header
 
 \subsection{Data Example}
 \subsubsection{Raw Data}
@@ -407,7 +407,35 @@ implemented a full interpreter I formalised the syntax I had developed. This
 approach enabled me to experiment without having to radically restructure the
 code at each iteration.
 
-\subsection{Grammar}
+Oosh supports normal conditionals based on process return codes, two
+different types of loops, string variables, pipe variables (which I
+refer to as `saved pipes') and command pipelines. This is a smaller
+feature set compared with more mature offerings such as Bash and
+Fish. However it is sufficient for basic shell interaction, and the
+parsing and evaluation code has been written in a sufficiently
+flexible manner that any desired expansion could be added with minimal
+difficulty.
+
+The design for variables deserves closer attention. The Oosh design
+can be seen as two variable namespaces, one that holds strings and the
+other that saves the output of pipes. Saved pipes may be emulated in
+bash by executing {\tt command1 > /tmp/foo} and then later {\tt command2
+  </tmp/foo}. However this approach requires the user to explicitly
+create temporary files and does not conveniently generalise to network
+access, which requires {\tt scp} as well. Saved pipes are therefore
+only a convenience for the user, not a completely novel use case.
+
+Other notable ommissions from this design include subshells (backticks
+in Bash usage), arithmetic operations, function definitions, array
+variables and non-interactive usage. This turns out to rarely be a
+problem for the user. Subshells can be emulated with pipe
+saving. Arithmetic operations may be performed using the Unix {\tt bc}
+command, which is arguably a more Unix style design (conforming to the
+``do one thing and do it well '' design mantra). The remaining
+ommissions are more difficult to work around but fall outside of the
+use cases being explored in Oosh.
+
+\subsection{Grammar Specification}
 \begin{grammar}
       [(colon){$::=$}]
       [(semicolon){$|\,$}]
@@ -549,24 +577,94 @@ I examined the selection of commands offered by BusyBox, as it aims to be a
 fairly minimal set of Unix commands required to make a system useful. Many
 commands were either interactive, set system settings or started daemons. None
 of these programs sent sufficient data to stdout for them to benefit from my
-new structure data approach.
+new structured data approach.
+
+There were three types of commands I implemented. I implemented data
+sources, which write data to {\tt stdout} in the Oosh data format. I
+also implemented data manipulators, which could perform a variety of
+database-like manipulations, inspired by the relational calculus. I
+also implemented a data analyser that would draw graphs based on input
+data given in the Oosh data format.
+
+I named all these commands using an {\tt oosh\_} prefix. This enabled me
+to reuse command command names such as {\tt ls} without clashes. This
+prefix also acted as a hook to call an Oosh command rather than look
+for Unix commands in {\tt \$PATH}.
 
 % fixme: needs to flow into next section
 
 \subsubsection{Data Sources}
-I implemented 
+I wrote {\tt oosh\_ls}, {\tt oosh\_echo} and {\tt oosh\_ps} based on their
+standard Unix equivalents. These produce data that conforms to my data
+format and produce interesting, useful data.
 
-\section{Example Scripts}
-%   -- snazzy pictures!
-% what does it do? how? why that way? what inputs? what outputs?
+\subsubsection{Data Manipulators}
+Since my data is a tabular format, I approached data manipulation
+using database style operators. Rather than using SQL style operators
+(whose syntax differs substantially from that of Oosh) I looked at the
+relational algebra and based my operator selection on it.
+
+I wrote {\tt oosh\_select} for selection, {\tt oosh\_project} for
+projection, {\tt oosh\_product} for the Cartesian product,
+{\tt oosh\_union} for set union, {\tt oosh\_difference} for set difference
+and {\tt oosh\_rename} for attribute rename. This is the minimal subset
+needed to give the user full expressive power. I also added
+{\tt oosh\_sort}, a sort operator as this is a common shell task that
+benefits substantially from structured data.
+
+\subsubsection{Data Analyser}
+The pretty print I wrote is a great improvement over the simplistic
+line-by-line printing used by traditional shell commands. However once
+we have pervasive metadata being produced we can perform more
+sophisticated analyses of the data. I wrote a graphing utility that
+takes full advantage of this structure.
+
+My grapher, {\tt oosh\_graph}, simply requires the user to name the
+dataseries he wishes to plot and the type of graph he wants. This is
+not impossible in Bash, but Oosh enables a more elegant approach since
+he can describe the data in a higher-order fashion.
+
+\begin{figure}[h]
+  \caption{A pie chart generated with {\tt oosh\_ps | oosh\_graph pie Command `CPU \%' cpu\_consumption.svg}}
+  \centering
+  \includegraphics[scale=0.4]{cpu_consumption.png}
+\end{figure}
 
 \section{Problems Overcome}
-% problems overcome:
-% 1. python documentation bugs (in regex IIRC)
-% 2. python 2 library compatibility
-% 3. Escape codes (can't print for debugging!)
-% 4. limits of shell output (used for cross product tests)
 
+The largest problem I faced during coding was dealing with the limited
+specification I started with. I could not implement a scripting
+language for Oosh until I had a grammar, which required careful and
+subjective judgements.
+
+My language choice of Python proved to be a good decision, but was not
+without problems. I made the decision to use Python 3, which
+drastically limited the number of third-party libraries I could
+use. Since each command is spawned as a separate process I was able to
+use Python 2 where it was absolutely necessary by hard-coding these
+exceptions. This was not ideal since my resulting codebase became
+heterogeneous.
+
+Python's documentation is generally good, but I did encounter bugs. I
+worked around these by examining the source of the libraries I was
+using (a luxury not always present in compiled languages).
+
+Unix shells have been around for so long that they have acquired a lot
+of tradition and legacy behaviour. Some of these legacy traits caused
+problems for me, particularly escape codes. Today's shells still
+support escape codes for obsolete behaviour such as ringing the system
+bell. These characters caused crashes in bugs, but could not be
+printed to the string, so presented an unusual challenge for finding
+the bug.
+
+The other limitation I encountered was Python's handling of signals,
+which is limited. Spawning subprocesses requires the ability to emit
+and receive a number of interprocess signals, and the Python base
+libraries do not support {\tt SIGPIPE}. I was only partly able to work
+around this limitation, and there still exist corner cases where Oosh
+crashes on large inputs. The correct way to fix it would be to replace
+a number of library functions with equivalents that handle this
+signal, but I concluded this was too time consuming for a rare bug.
 
 \cleardoublepage
 
@@ -582,6 +680,14 @@ measure both networking overhead and scaling.
 
 Finally, I also include some simple performance benchmarks based on system
 resource consumption and latency from the user's perspective.
+
+\section{Character Counts}
+
+\section{Network Benchmarks}
+
+\section{Bash Overheads}
+
+
 % what was evaluated?
 % what were the results?
 %   -- no of processes spawned
@@ -589,7 +695,8 @@ resource consumption and latency from the user's perspective.
 %   -- network data comparisons (fixed and variable cost increases measured)
 %   -- performance
 %     -- wall clock time
-%     -- memory and CPU usage
+%     -- memory and CPU usage (never exceeded 43MiB memory during
+%     benchmarks, or 40% CPU)
 % testing/debugging
 % comparing against requirements
 
@@ -686,9 +793,10 @@ freenode_#kde-i18n.log wilfred 879
 freenode_#kde.log      wilfred 53318
 \end{verbatim}
 
-Note grep is run on the server despite not specifying. Also note the output of
-{\tt oosh\_ls} is not sent immediately, the client only requests it to be sent at
-the end.
+Note grep is run on the server despite not specifying. Also note the
+output of {\tt oosh\_ls} is not sent immediately, the client only
+requests it to be sent at the end.
+
 \begin{verbatim}
 $ ./ooshserver.py
 Starting server at soup.linux.pwf.cam.ac.uk (193.60.95.74) on port 12345
