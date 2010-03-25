@@ -34,8 +34,6 @@ if not is_numeric:
         line[sort_on] = str(line[sort_on])
 
 lines.sort(key=operator.itemgetter(sort_on))
-count = 0
 for dic in lines:
-    count += 1
     sys.stdout.write(dic.__repr__() + '\n')
-print("count",count)
+
