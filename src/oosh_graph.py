@@ -3,9 +3,6 @@ import cairo
 import sys
 import oosh
 
-pipein = sys.stdin.read().splitlines()
-lines = oosh.get_from_pipe(pipein)
-
 args = sys.argv[1:]
 if len(args) < 4:
     print "usage: chart_type label variable filename"
@@ -15,6 +12,9 @@ chart_type = args[0]
 variable_x = args[1]
 variable_y = args[2]
 file_name = args[3]
+
+pipein = sys.stdin.read().splitlines()
+lines = oosh.get_from_pipe(pipein)
 
 if chart_type == 'pie':
     pie_data = {}
