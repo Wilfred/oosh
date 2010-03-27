@@ -6,6 +6,7 @@
 
 % for pretty printing grammar in BNF
 \usepackage{bnf}
+\usepackage{color}
 
 \usepackage{graphicx}
 
@@ -75,13 +76,12 @@ Supervisor:         & \bf David Eyers                    \\
 }
 
 \section*{Original Aims of the Project}
-% 72 words
-I planned to write a Unix shell from scratch in Python. It would differ from
-traditional shells by enforcing a data structure on data piped between processes,
-so programs can reason about data at a higher level. It would also enable
-transparent network access using a design that can minimise network traffic by
-reasoning about the commands used. Finally, the shell syntax would be simplified
-to minimise command length for common instructions.
+% 72 words I planned to write a Unix shell from scratch in Python. It would
+differ from traditional shells by enforcing a data structure on data piped
+between processes, so programs can reason about data at a higher level. It would
+also enable transparent network access using a lazy data fetch. Finally, the
+shell syntax would be simplified to minimise command length for common
+instructions.
 
 \section*{Work Completed}
 % fixme: less than 100 words, but proforma cannot exceed one page
@@ -93,6 +93,7 @@ I created a set of commands which understand the data structure I defined. These
 included commands which produce data, commands that manipulate data and an
 automatic graphing utility.
 
+% fixme: repeats 'lazy' terminology from above
 For networking I created a server that permits users to log in and execute
 commands as if they were being run locally. The client then fetches data lazily
 from the server.
@@ -154,9 +155,7 @@ Networking tasks are more common than ever, so my new design needed to include a
 convenient networking abstraction. I developed a simple client/server
 architecture that uses lazy data transfers to minimise bandwidth.
 
-% overview
 % why this solution?
-
 
 \cleardoublepage
 
@@ -213,14 +212,20 @@ used. Some commands take a host as an argument whereas others take a network
 session object argument.
 
 \section{Requirements}
-% pipe saving: users develop iteratively, so let them save output so far. more minimal,
-% more hidden, less confusing
-I needed to create a shell that would be familiar to an experience shell user,
+I needed to create a shell that would be familiar to an experienced shell user,
 so my shell should follow shell conventions where sensible. Any shell that hopes
 to be be useful for a majority of users must be compatible with existing Unix
 commands as there are simply too many to reimplement all of them for a new
 design. My shell therefore needed to support the commands already available on
 the user's system.
+
+The scripting language that my shell would accept needed to be familiar to users
+of common shells available today. Any changes made needed to be justified as to
+how they made common use cases simpler. This included examining the pipeline
+metaphor in some depth and expanding it. One common use case is developing a
+shell command incrementally, whilst only being interested in the output of the
+final command. I concluded that the shell required the ability to save
+intermediate pipelines in a lightweight fashion.
 
 % used a data structure that was line based for compatibility
 I also needed to develop a data structure that would enable my programs to
@@ -255,14 +260,17 @@ code on GitHub, which had the additional benefit of acting as an off-site
 backup. Later on I needed a parser and lexer so chose Python implementations of
 Lex and Yacc as these are also standard tools.
 
+% fixme: section number
 My initial specification was very broad, which enabled me to use a fairly
 exploratory style of coding. My final grammar is in figure {\em foo} and was
-developed iteratively after researching the syntax used in bash and fish.
+developed iteratively after researching the syntax used in bash and fish. This grammar 
 
-Ultimately a mainstream shell is a very large body of code (for example, Bash
-4.1 contains over 140,000 lines of C code\footnotemark[1]) and so I could not hope to replicate all
-this functionality in the time available. My objective then became to produce a
-proof-of-concept shell that demonstrated the advantages of my design.
+Ultimately a mainstream shell is a very large body of code (for
+example, Bash 4.1 contains over 140,000 lines of C
+code\footnotemark[1]) and so I could not hope to replicate all this
+functionality in the time available. My objective then became to
+produce a proof-of-concept shell that demonstrated the advantages of
+my design.
 
 % in bash directory ran $ find . -name '*.[ch]' | xargs wc -l
 
@@ -271,22 +279,14 @@ proof-of-concept shell that demonstrated the advantages of my design.
 }
 \stepcounter{footnote}
 
-% features:
-% n/w optimisation
-% new pipeline metaphor -- save, y-pipe, networking
-% strict data format
-% interleave new commands
-% primitive namespacing
-% familiar syntax
-
 % bash and fish: no proper grammar. hard to change guts for more radical
 % features, bash substantial body of code -- compatibilty unwanted, no hackable grammar
 % python offered cmd.py which is skeleton shell
 % networking easier in python, text manipulation particularly so
 
-Typical CLI commands are developed iteratively, which is why commands print
-their usage guidelines if used incorrectly. Pipeline saving allows the user to
-develop his pipelines more incrementally.
+%% Typical CLI commands are developed iteratively, which is why commands print
+%% their usage guidelines if used incorrectly. Pipeline saving allows the user to
+%% develop his pipelines more incrementally.
 
 A shell is not as expressive as a programming language (sh was unusual in having
 optional ; in its day), and a REPL has a different feel. A shell optimises for
@@ -318,6 +318,13 @@ is exported to invoked processes to handle instead.
 \cleardoublepage
 
 \chapter{Implementation}
+% features:
+% n/w optimisation
+% strict data format
+% interleave new commands
+% primitive namespacing
+% familiar syntax
+
 The final result of my project was the shell client itself, a simple server and
 a selection of commands that understood the oosh data structures. I also wrote
 some simple scripts to demonstrate the power and flexibility of my design.
@@ -327,6 +334,51 @@ some simple scripts to demonstrate the power and flexibility of my design.
 In appendix \ref{examples} I give an example of an Oosh session, which
 gives concrete examples and their resulting output. This should clarify how
 these techniques work in practice.
+
+\section{Pipelines}
+A major focus of Oosh's design is making the concept of pipes more powerful than
+the options available on competing shells. Oosh generalises the concept of pipes
+to enable multiple commands to have their output piped into a single input. It
+also permits convenient pipe saving for later access. Pipes also work over a
+network transparently to the user.
+
+\subsection{Pipe Saving}
+A common way of using today's shells is to iteratively write instructions. A
+system administrator, trying to fix a KDE application, may build up a Bash command as
+follows:
+% fixme: better as figures?
+\begin{verbatim}
+$ ls /usr/lib
+$ diff /backup/20100120/usr/lib /usr/lib
+$ diff /backup/20100120/usr/lib /usr/lib | grep libkde
+\end{verbatim}
+
+In this example he is repeatedly reading /usr/lib. Each command rereads from
+this folder unnecessarily. As the command gets longer he is no longer interested in
+the earlier processes. The solution here is to allow him to save this data so
+that he can access it again later, whilst only worrying about the current filter
+operations he is performing. In Oosh this would become:
+
+\begin{verbatim}
+$ oosh_ls /usr/lib |1
+$ oosh_ls /backup/20100120/usr/lib |2
+$ |1+2 oosh_difference |3
+$ |3 grep libkde
+\end{verbatim}
+
+The user is now able to reason about previously generated data in a simpler
+manner. He can also refer back to previously generated results even if he cannot
+generate the data again. Whilst in the first case % or refer to figures
+the user can use output redirection to save the output of {\tt ls} and {\tt
+  diff}. However the Bash redirection syntax is less concise, so the commands
+still cannot be made as short (and therefore as readable) % need to justify
+as the Oosh commands.
+
+\subsection{Multipipes}
+%todo
+
+\subsection{Pipes over networks}
+%todo
 
 \section{Data Structures}
 My initial design was to have structured data pass through pipes between the
@@ -354,8 +406,7 @@ shell on all conformant data.
 
 The pretty print functionality I developed is coloured, uses character-perfect
 layout and supports heterogeneous lines of data. This ensures that each column
-is printed at optimum width dependent on the length of the
-entries. 
+is printed at optimum width dependent on the length of the entries.
 
 The algorithm I designed takes lines of Oosh output as input and finds
 the optimum layout. This is $O(C \log C + CL)$ time, where $L$ is the
@@ -364,7 +415,7 @@ later. %todo: add section number
 
 The disadvantage of my design is that it requires a line entered by
 the user to have finished being evaluated before anything is shown to
-the user. 
+the user.
 
 % but by benchmark, even 50k producing data is acceptable
 % as discussed later, computational intensive tasks tend not to output
@@ -419,7 +470,7 @@ difficulty.
 The design for variables deserves closer attention. The Oosh design
 can be seen as two variable namespaces, one that holds strings and the
 other that saves the output of pipes. Saved pipes may be emulated in
-bash by executing {\tt command1 > /tmp/foo} and then later {\tt command2
+bash by executing {\tt command1 >/tmp/foo} and then later {\tt command2
   </tmp/foo}. However this approach requires the user to explicitly
 create temporary files and does not conveniently generalise to network
 access, which requires {\tt scp} as well. Saved pipes are therefore
@@ -435,47 +486,43 @@ command, which is arguably a more Unix style design (conforming to the
 ommissions are more difficult to work around but fall outside of the
 use cases being explored in Oosh.
 
-\subsection{Grammar Specification}
+
+\begin{figure}[h]
+\caption{A formal specification of the language accepted by Oosh}
 \begin{grammar}
       [(colon){$::=$}]
       [(semicolon){$|\,$}]
       [(nonterminal){$\langle$}{$\rangle$}]
       [(quote){}{}] % grim hack since ; has meaning so we use ";"
 <commands> : <commands>";" <commands>\\
-;commands NAMEDPIPE
-;<while>
-;<if>
-;<assign>
-;<for>
-;<command>
-;$\epsilon$
+% grim hack to force indentation
+\textcolor{white}{tab};commands NAMEDPIPE\\
+\textcolor{white}{tab};<while> ;<if> ;<assign> ;<for> ;<command> ;$\epsilon$
 
 <for> : for STRING in <values>";" do <commands>";" end
 
 <while> : while <command>";" do <commands>";" end
 
 <if> : if <command>";" do <commands>";" end\\
-;if <command>";" do <commands>";" else do <commands>";" end
+\textcolor{white}{tab};if <command>";" do <commands>";" else do <commands>";" end
 
 <assign> : set STRING <value>
 
 <command> : <simplecommand>\\
-;NAMEDPIPE <simplecommand>\\
-;MULTIPIPE <multicommand> PIPE <simplecommand>\\
-;MULTIPIPE <multicommand>
+\textcolor{white}{tab};NAMEDPIPE <simplecommand>\\
+\textcolor{white}{tab};MULTIPIPE <multicommand> PIPE <simplecommand>\\
+\textcolor{white}{tab};MULTIPIPE <multicommand>
 
-<values> : <value> <values>
-;<value>
+<values> : <value> <values> ;<value>
 
-<value> : STRING
-;VARIABLE
-;QUOTEDSTRING
+<value> : STRING ;VARIABLE ;QUOTEDSTRING
 
 <simplecommand> : <values>
 ;PIPE <simplecommand>
     
 <multicommand> : <values>
 \end{grammar}
+\end{figure}
 
 \section{The Shell}
 The Oosh client is the largest single piece of code and can function without a
@@ -493,38 +540,6 @@ Within each pipeline % have pipelines been explained by this point?
 a {\tt PipePointer} is passed along to abstract away the actual location of the
 data. This enables the shell to use Unix pipes locally % would be good to benchmark this
 but still move data across the network as needed.
-
-\section{Pipe Saving}
-A common way of using today's shells is to iteratively write instructions. A
-system administrator, trying to fix a KDE application, may build up a Bash command as
-follows:
-% fixme: better as figures?
-\begin{verbatim}
-$ ls /usr/lib
-$ diff /backup/20100120/usr/lib /usr/lib
-$ diff /backup/20100120/usr/lib /usr/lib | grep libkde
-\end{verbatim}
-
-In this example he is repeatedly reading /usr/lib. Each command rereads from
-this folder unnecessarily. As the command gets longer he is no longer interested in
-the earlier processes. The solution here is to allow him to save this data so
-that he can access it again later, whilst only worrying about the current filter
-operations he is performing. In Oosh this would become:
-
-\begin{verbatim}
-$ oosh_ls /usr/lib |1
-$ oosh_ls /backup/20100120/usr/lib |2
-$ |1+2 oosh_difference |3
-$ |3 grep libkde
-\end{verbatim}
-
-The user is now able to reason about previously generated data in a simpler
-manner. He can also refer back to previously generated results even if he cannot
-generate the data again. Whilst in the first case % or refer to figures
-the user can use output redirection to save the output of {\tt ls} and {\tt
-  diff}. However the Bash redirection syntax is less concise, so the commands
-still cannot be made as short (and therefore as readable) % need to justify
-as the Oosh commands.
 
 \section{Networking}
 % need intro para
@@ -563,7 +578,6 @@ data on the users behalf we can send the data lazily.
 
 The server supports the following commands:
 % would be good to have send to other server
-
 
 \section{Command Selection}
 In addition to the shell with its built-ins, I needed a selection of programs
@@ -627,7 +641,7 @@ he can describe the data in a higher-order fashion.
 \begin{figure}[h]
   \caption{A pie chart generated with {\tt oosh\_ps | oosh\_graph pie Command `CPU \%' cpu\_consumption.svg}}
   \centering
-  \includegraphics[scale=0.4]{cpu_consumption.png}
+  %\includegraphics[scale=0.4]{cpu_consumption.png}
 \end{figure}
 
 \section{Problems Overcome}
@@ -681,7 +695,75 @@ measure both networking overhead and scaling.
 Finally, I also include some simple performance benchmarks based on system
 resource consumption and latency from the user's perspective.
 
-\section{Character Counts}
+\section{Command Length}
+Since Oosh offers a higher level view of data, it should produce more concise
+commands that are also easier to read. Defining a typical workload is extremely
+difficult so instead I consider the best case scenarios.
+
+% fixme: citation needed, preferably the original book/paper I compare Oosh
+commands with Bash commands by length. In addition to simple character count I
+compare the Halstead length as a simple measure of complexity. The Halstead
+length is defined as the sum of the number of operators and operands and avoids
+penalising simple commands with longer arguments or names.
+
+% compare using standard unix commands plus shell redirection vs pipeline saving
+\begin{tabular}{|l|l|l|}
+\hline
+Command sequence & Character count & Halstead length \\
+\hline
+{\tt ls /bin \textgreater /tmp/bin1.txt} & 96 & 14 \\
+{\tt ls /usr/bin \textgreater /tmp/bin2.txt} & & \\
+{\tt cat /tmp/bin1.txt /tmp/bin2.txt \textbar \, grep python} & & \\
+
+\hline
+{\tt oosh\_ls /bin \textbar 1} & 66 & 13 \\
+{\tt oosh\_ls /usr/bin \textbar 2} & & \\
+{\tt \textbar 1+2 oosh\_union \textbar \, grep python} & & \\
+\hline
+\end{tabular}
+
+In this example Oosh produces a character saving despite command names being
+longer. The Halstead length is almost unchanged, so Oosh is not producing a
+substantial difference in command simplicity for the user. The pipeline
+redirection in Bash requires the user to choose a name for temporary data, an
+unnecessary overhead. The character count reduction therefore corresponds to a
+modest decrease in complexity for the user.
+
+% a more sophisticated filtering example
+\begin{tabular}{|l|l|l|}
+\hline
+Command sequence & Character count & Halstead length \\
+\hline
+{\tt ps aux | tail -n +2 | sort -k 3,3 | \textbackslash} & 76 & 25\\
+{\tt sed `s/ \textbackslash+/ /g' | cut -d " " -f 1,3,11-} & & \\
+\hline
+{\tt oosh\_ps | oosh\_sort `CPU\%' | oosh\_project User Command `CPU \%'} & 64 &
+9 \\
+\hline
+\end{tabular}
+
+This example, which uses filtering based on tabular data, benefits hugely from
+the Oosh design. The Oosh example uses slightly fewer characters but its
+Halstead length is dramatically shorter. This example also slightly favours {\tt
+  oosh\_ps} since we have to pass an argument to {\tt ps} to achieve the same
+output, but even discounting for this the Bash command is substantially more complex.
+
+The Bash example works as follows: list all processes running, remove the
+header, sort on column 3, convert all whitespace blocks to single spaces then
+finally cut out columns 1, 3 and 11 onwards. Since the header is just another
+line of text to {\tt sort}, we must remove it whilst {\tt oosh\_sort} does not
+require this input massaging. {\tt cut} is used to only split the line based on
+spacing, so we must use {\tt sed} to ensure spacing is uniform. Even though {\tt
+  ps} does primitive formatting, we are forced to remove it.
+
+The metrics here do not capture another simplification offered by Oosh's high
+level data view. The Oosh example enables the user to refer to column by name
+rather than the incidental position. ``Sort on the CPU \% column'' is more
+readable than ``sort on column 3'' despite the Halstead length being
+identical. A thorough user test would be required to measure the benefit of
+this.
+
+% networking example
 
 \section{Network Benchmarks}
 

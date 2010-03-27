@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/binpython3
 
 # default python interpreter facilities
 # source is in /usr/lib/python3.1/cmd.py
