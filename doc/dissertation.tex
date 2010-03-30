@@ -399,6 +399,7 @@ Oosh commands whilst still preserving the data format. The examples in sections
 \ref{lsexample} and \ref{forexample} demonstrate this.
 
 \subsection{Pretty Printing}
+\label{prettyimpl}
 Since traditional Unix commands output data in an unstructured way, output forms
 vary widely. In contrast, Oosh enforces its format, so it naturally follows to
 spend more development time on an attractive pretty print that is run by the
@@ -742,11 +743,12 @@ Command sequence & Character count & Halstead length \\
 \hline
 \end{tabular}
 
-This example, which uses filtering based on tabular data, benefits hugely from
-the Oosh design. The Oosh example uses slightly fewer characters but its
-Halstead length is dramatically shorter. This example also slightly favours {\tt
-  oosh\_ps} since we have to pass an argument to {\tt ps} to achieve the same
-output, but even discounting for this the Bash command is substantially more complex.
+This example, which uses filtering based on tabular data, benefits
+hugely from the Oosh design. The Oosh example uses slightly fewer
+characters but its Halstead length is dramatically shorter. This
+example also slightly favours {\tt oosh\_ps} since we have to pass an
+argument to {\tt ps} to achieve the same output, but even discounting
+for this the Bash command is substantially more complex.
 
 The Bash example works as follows: list all processes running, remove the
 header, sort on column 3, convert all whitespace blocks to single spaces then
@@ -767,8 +769,129 @@ this.
 
 \section{Network Benchmarks}
 
-\section{Bash Overheads}
+\section{Oosh Overheads}
 
+I also conducted a series of benchmarks which measure the performance
+overhead of using Oosh instead of standard tools.
+
+\subsection{Overheads due to Oosh design choices}
+My first test compared running {\tt oosh\_ls} with {\tt ls} 6.12 from
+GNU coreutils on a collection of directories with contents of varying
+size. I generated these directories using the Bash command {\tt for x
+  in {1..n} do echo -n ``'' >\$x.txt; done} to ensure that all the
+files were identical. Figure \ref{lsspeed} shows the performance
+difference between the two.
+
+\begin{figure}[h]
+\label{lsspeed}
+\centering
+\caption{Contrasting performance between {\tt ls} from GNU Coreutils
+  and {\tt oosh\_ls}}
+\includegraphics[scale=0.5]{ls_graph.png}
+\end{figure}
+
+This graph demonstrates that there is very little performance overhead
+when using Oosh for large datasets. At the lower end, Oosh has a
+startup time of approximately 0.02 seconds which can be attributed to
+the startup time of the Python interpreter. This difference is below
+the level of human perception, although pathological cases probably
+exist, such as an Oosh script with many short lived processes. A human
+being cannot perceive delays of less than 0.1 seconds 
+% Card, S K, Moran, T P and Newell, A. The Psychology of
+% Humam-Computer Interaction
+so this delay is acceptable. Both {\tt ls} and {\tt oosh\_ls} can be
+seen to be scaling linearly with respect to the number of files.
+
+Testing {\tt oosh\_ls} scaling allowed me to analyse the costs
+introduced by produced by my data structure. If we consider a sample
+piece of output from {\tt oosh\_ls} being run on the root directory,
+we obtain figure \ref{lsroot}. 
+% fixme: producing wrong cross-references
+
+\begin{figure}
+\label{lsroot}
+\caption{Output of {\tt oosh\_ls /} without pretty printing}
+\begin{verbatim}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'root'}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'media'}
+{'Owner': 'root', 'Size': 0, 'Filename': '.servers'}
+{'Owner': 'root', 'Size': 0, 'Filename': '.ux'}
+{'Owner': 'root', 'Size': 3072, 'Filename': 'boot'}
+{'Owner': 'wrah2', 'Size': 512, 'Filename': 'apps'}
+{'Owner': 'root', 'Size': 12288, 'Filename': 'etc'}
+{'Owner': 'root', 'Size': 4540, 'Filename': 'dev'}
+{'Owner': 'root', 'Size': 0, 'Filename': 'proc'}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'opt'}
+{'Owner': 'root', 'Size': 0, 'Filename': 'servers'}
+{'Owner': 'root', 'Size': 36864, 'Filename': 'tmp'}
+{'Owner': 'root', 'Size': 12288, 'Filename': 'authcon'}
+{'Owner': 'root', 'Size': 12288, 'Filename': 'sbin'}
+{'Owner': 'root', 'Size': 0, 'Filename': 'sys'}
+{'Owner': 'root', 'Size': 12288, 'Filename': 'lib'}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'bin'}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'usr'}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'var'}
+{'Owner': 'wrah2', 'Size': 512, 'Filename': 'ux'}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'srv'}
+{'Owner': 'root', 'Size': 4096, 'Filename': 'mnt'}
+{'Owner': 'root', 'Size': 16384, 'Filename': 'lost+found'}
+{'Owner': 'root', 'Size': 12288, 'Filename': 'home'}
+\end{verbatim}
+\end{figure}
+
+As text data this is 1243 bytes, yet {\tt gzip} will compress it to
+only 251 bytes. There is clearly redundancy and inefficiency in the
+data format. However this data is typically sent locally, and since
+this data is sent via local inter-process communication we have a lot
+of bandwidth and can afford the additional overhead of Oosh structured
+data. As discussed in section \ref{othermeasures}, CPU consumption is
+more of a concern with Oosh so introducing compression would be
+unlikely to be a useful optimisation.
+
+\subsection{Latencies introduced by pretty printing}
+
+As discussed in section \ref{prettyimpl}, my pretty printing algorithm
+is $O(C \log C + CL)$ in time, where $C$ is the number of columns and
+$L$ the number of lines. Under the assumption that a typical workload
+will have vastly more lines than columns in the output, I measured
+the additional time taken for output to be shown to the user if my
+pretty print algorithm is used.
+
+\begin{figure}[h]
+\caption{Added latency due to running pretty print algorithm on Oosh
+  output}
+\centering
+\includegraphics[scale=0.5]{print_graph.png}
+\end{figure}
+
+This graph was produced using the same set of directories as in the
+previous benchmark, and similarly using {\tt oosh\_ls}. I then
+compared time for the command to terminate when with and without
+pretty printing.
+
+This graph conceals the fact that the pretty print algorithm requires
+the full input before producing any output, whereas the simplistic
+Bash-style approach of writing output asynchronously reduces the
+perceived latency. The algorithm performs as expected, scaling roughly
+linearly as the number of lines increases. Since printing 1000 lines
+introduces only 33 milliseconds of delay (on top of the 93
+milliseconds required by the rest of the command execution), the
+performance of Oosh's pretty print is completely acceptable for small
+or medium sized quantities of data.
+
+\subsection{Other measures}
+\label{othermeasures}
+
+I also performed a few simpler measures of resource
+utilisation. Whilst performing my benchmarks on the most recent build
+of Oosh, I used the Linux resource monitor to measure peak system
+usage. Memory usage peaked at 43MiB, and CPU usage at 40\%. The memory
+consumption is acceptable on a modern systems which tend to have at
+least 2GiB of memory. However CPU usage is rather high and since many
+experienced shell users often have a number of shells open at once,
+this may become a problem.
+
+By contrast, % need some Bash measures here
 
 % what was evaluated?
 % what were the results?
@@ -811,6 +934,11 @@ proof-of-concept design.
 % also problems with some data simply not being structured: apt-get upgrade,
 % wget, sophisticated interfaces: nano, emacs, irssi, lynx
 % line continuations would be nice too
+
+I did not take advantage of any of the optimising flags or profiling
+tools within Python, so there is some potential for
+improvement. Nonetheless, Oosh performance is not much worse than that
+of Bash.
 
 \cleardoublepage
 
