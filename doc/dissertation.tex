@@ -126,10 +126,10 @@ purpose.
 \newpage
 \section*{Acknowledgements}
 
-% previous projects in this area:
-% G Beasley 2003
-% J Harbin 2005
-% J Tippell 2006 -- Josh (no true pipelines)
+There have been three previous part II projects in this area that I am
+aware of. I have examined them briefly, but they explored different
+shell topics to Oosh. These are J.\ Tippell in 2006, J.\ Harbin in
+2005 and G.\ Beasley in 2003.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % now for the chapters
@@ -242,15 +242,20 @@ that would produce structured data, commands that could manipulate this data and
 commands that would offer visualisations of this data.
 
 Finally, I wanted my shell to support a convenient network abstraction. This
-required a simple client/server architecture and lightweight syntax to support it.
+required a simple client/server architecture and lightweight syntax to
+support it.
 
 \section{Development Approach}
-Since my design aimed to build on traditional shell design, extending an
-existing shell was an option worth considering, particularly since most Unix
-shells are available under an open-source lincense. I investigated building on
-top of Bash or fish, but both of these were substantial pieces of C code, most
-of which would require major changes to work with my intended features. I
-concluded that starting afresh was my best option.
+Since my design aimed to build on traditional shell design, extending
+an existing shell was an option worth considering, particularly since
+most Unix shells are available under an open-source lincense. I
+investigated building on top of Bash or fish, but both of these were
+substantial pieces of C code, most of which would require major
+changes to work with my intended features. For example, Fish uses a
+custom parser which is approximately 2000 lines of C code. Compatibility
+with existing shells did not offer any obvious benefits for the
+additional effort. I concluded that starting afresh was my best
+option.
 
 Since I was developing a tools for a modern Unix system, I chose a workflow that
 followed today's Unix coding practices. I chose to write my shell in Python, a
@@ -260,10 +265,11 @@ code on GitHub, which had the additional benefit of acting as an off-site
 backup. Later on I needed a parser and lexer so chose Python implementations of
 Lex and Yacc as these are also standard tools.
 
-% fixme: section number
-My initial specification was very broad, which enabled me to use a fairly
-exploratory style of coding. My final grammar is in figure {\em foo} and was
-developed iteratively after researching the syntax used in bash and fish. This grammar 
+My initial specification was very broad, which enabled me to use a
+fairly exploratory style of coding. My final grammar is in figure
+\ref{grammar} and was developed iteratively after researching the
+syntax used in Bash and Fish. This grammar was created to provide a
+useful subset of Fish functionality and be syntactically similar.
 
 Ultimately a mainstream shell is a very large body of code (for
 example, Bash 4.1 contains over 140,000 lines of C
@@ -272,15 +278,12 @@ functionality in the time available. My objective then became to
 produce a proof-of-concept shell that demonstrated the advantages of
 my design.
 
-% in bash directory ran $ find . -name '*.[ch]' | xargs wc -l
-
 \footnotetext[1]{Calculated by running {\tt find . -name '*.[ch]' | xargs wc -l}
-  on the source code of Bash 4.1.
-}
+  on the source code of Bash 4.1.}
 \stepcounter{footnote}
 
 % bash and fish: no proper grammar. hard to change guts for more radical
-% features, bash substantial body of code -- compatibilty unwanted, no hackable grammar
+% features, no hackable grammar
 % python offered cmd.py which is skeleton shell
 % networking easier in python, text manipulation particularly so
 
@@ -319,7 +322,6 @@ is exported to invoked processes to handle instead.
 
 \chapter{Implementation}
 % features:
-% n/w optimisation
 % strict data format
 % interleave new commands
 % primitive namespacing
@@ -343,36 +345,48 @@ also permits convenient pipe saving for later access. Pipes also work over a
 network transparently to the user.
 
 \subsection{Pipe Saving}
-A common way of using today's shells is to iteratively write instructions. A
-system administrator, trying to fix a KDE application, may build up a Bash command as
-follows:
-% fixme: better as figures?
+A common way of using today's shells is to iteratively write
+instructions. Many Unix commands recognise this approach and so print
+a simple help message if called without any arguments. Oosh commands
+also follow this convention. A system
+administrator, trying to fix a KDE application, may build up a Bash
+command as shown in figure \ref{bashiter}.
+
+\begin{figure}[h]
+\label{bashiter}
+\caption{Iterative shell usage with Bash}
 \begin{verbatim}
 $ ls /usr/lib
 $ diff /backup/20100120/usr/lib /usr/lib
 $ diff /backup/20100120/usr/lib /usr/lib | grep libkde
 \end{verbatim}
+\end{figure}
 
-In this example he is repeatedly reading /usr/lib. Each command rereads from
+In this example he is repeatedly reading {\tt /usr/lib}. Each command rereads from
 this folder unnecessarily. As the command gets longer he is no longer interested in
-the earlier processes. The solution here is to allow him to save this data so
+the earlier processes. The Oosh solution here is to allow him to save this data so
 that he can access it again later, whilst only worrying about the current filter
-operations he is performing. In Oosh this would become:
+operations he is performing. This is shown in figure \ref{ooshiter}.
 
+\begin{figure}
+\label{ooshiter}
+\caption{Iterative shell usage with Oosh}
 \begin{verbatim}
 $ oosh_ls /usr/lib |1
 $ oosh_ls /backup/20100120/usr/lib |2
 $ |1+2 oosh_difference |3
 $ |3 grep libkde
 \end{verbatim}
+\end{figure}
 
-The user is now able to reason about previously generated data in a simpler
-manner. He can also refer back to previously generated results even if he cannot
-generate the data again. Whilst in the first case % or refer to figures
-the user can use output redirection to save the output of {\tt ls} and {\tt
-  diff}. However the Bash redirection syntax is less concise, so the commands
-still cannot be made as short (and therefore as readable) % need to justify
-as the Oosh commands.
+The administrator is now able to reason about previously generated data in a
+simpler manner. He can also refer back to previously generated results
+even if he cannot generate the data again.
+
+An experienced Bash user could use output redirection to achieve the
+same effect as the Oosh example. This is discussed in section
+\ref{commandlength}. However the Bash redirection syntax is less
+concise, so the equivalent commands are not as short or as readable.
 
 \subsection{Multipipes}
 %todo
@@ -487,8 +501,8 @@ command, which is arguably a more Unix style design (conforming to the
 ommissions are more difficult to work around but fall outside of the
 use cases being explored in Oosh.
 
-
 \begin{figure}[h]
+\label{grammar}
 \caption{A formal specification of the language accepted by Oosh}
 \begin{grammar}
       [(colon){$::=$}]
@@ -525,6 +539,76 @@ use cases being explored in Oosh.
 \end{grammar}
 \end{figure}
 
+\subsection{Simple Pipelines}
+
+I performed an examination of an online command-line snippets
+repository \cite{clifu} and the official Bash reference manual
+\cite{bashman}. I concluded that the pipeline is the most frequently
+used and earliest taught shell command. The Oosh pipeline syntax is
+immediately familiar to a shell user, without any different syntax
+required for structured data or unstructured data. It is so similar
+that many simple shell invocations will work unchanged in Oosh. Figure
+\ref{lsexample} gives an example of this feature in use.
+
+\begin{figure}
+\label{lsexample}
+\caption{A simple pipeline showing contextual data manipulation. Note tail is a part of
+GNU coreutils and is working in Oosh without modification.}
+\begin{verbatim}
+1$ oosh_ls /usr/bin | oosh_project Filename Size | oosh_sort Size | tail
+Filename Size
+mencoder 10984340
+inkview  11074508
+inkscape 11100236
+mplayer  11758932
+bibtexu  17312116
+xetex    17799216
+xelatex  17799216
+skype    18567888
+\end{verbatim}
+\end{figure}
+
+\subsection{Control Structures}
+\label{forexample}
+
+Control structures vary quite widely between shell offerings. One
+perceived weakness of Bash is that blocks are closed using different
+keyword depending on the control structure used. For example, a {\tt
+  for} loop syntax ends with {\tt end}, an {\tt if} block ends with
+{\tt fi} and a function declaration ends with {\tt \}}. Fish fixes
+this weakness (at the expense of POSIX compliance) by always using
+{\tt end}. I felt that this made writing shell scripts easier so the
+Oosh syntax is very similar to Fish here.
+
+Figure \ref{forloop} shows the user using a {\tt for} loop.
+
+\begin{figure}
+\label{forloop}
+\caption{An example {\tt for} loop in Oosh, demonstrating variable
+  assignment and unstructured data}
+\begin{verbatim}
+3$ for x in 131.111.8.42 131.111.12.20 131.111.131.1; do ping $x -c 1; end
+PING 131.111.8.42 (131.111.8.42) 56(84) bytes of data.
+64 bytes from 131.111.8.42: icmp_seq=1 ttl=252 time=0.400 ms
+
+--- 131.111.8.42 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.400/0.400/0.400/0.000 ms
+PING 131.111.12.20 (131.111.12.20) 56(84) bytes of data.
+64 bytes from 131.111.12.20: icmp_seq=1 ttl=252 time=0.433 ms
+
+--- 131.111.12.20 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.433/0.433/0.433/0.000 ms
+PING 131.111.131.1 (131.111.131.1) 56(84) bytes of data.
+64 bytes from 131.111.131.1: icmp_seq=1 ttl=63 time=0.338 ms
+
+--- 131.111.131.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.338/0.338/0.338/0.000 ms
+\end{verbatim}
+\end{figure}
+
 \section{The Shell}
 The Oosh client is the largest single piece of code and can function without a
 server. Basic command line interaction is provided by the {\tt cmd.Cmd} object
@@ -550,7 +634,9 @@ convenient syntax and efficient bandwith usage. Today a user can use Bash and
 SSH to run commands remotely, but running successive commands on different
 systems is not covenient.
 
-% collect data remotely, analyse locally
+\begin{figure}
+\caption{Collecting data remotely and performing analysis locally
+  using Bash}
 \begin{verbatim}
 home$ ssh wilfred@remote.com
 remote$ ps > /tmp/ps.txt
@@ -559,17 +645,22 @@ Connection to remote.com closed.
 home$ scp wilfred@remote.com:/tmp/ps.txt .
 home$ grep root <ps.txt 
 \end{verbatim}
+\end{figure}
 
-% sadly grep is moved to remote, need better example
+\begin{figure}
+\caption{Collecting data remotely and performing analysis locally
+  using Oosh}
 \begin{verbatim}
 $ connect@remote.com wilfred password
-$ ps@remote.com | grep root
+$ ps@remote.com | grep@localhost root
 \end{verbatim}
+\end{figure}
 
-After extending the Oosh syntax % nb. not in grammar specification
-to allow this simple location specification, I required a server/client
-architecture that would enable the user to run remote commands from his Oosh
-client as if they were local.
+I firstly extended the Oosh syntax to allow this simple location
+specification using a hook in the evaluator (hence this is not shown
+in the grammar specification). I then required a server/client
+architecture that would enable the user to run remote commands from
+his Oosh client as if they were local.
 
 The server is a very simple design, only permitting one user to interact at any
 one point. Using the client, the user specifies the location where he wishes
@@ -577,8 +668,82 @@ commands to be run. Once the user has logged in to a remote server, the client
 will automatically initiate commands on the server. Since the client collects
 data on the users behalf we can send the data lazily.
 
-The server supports the following commands:
-% would be good to have send to other server
+The server supports the following commands: {\tt connect}, to
+authenticate a new user, {\tt
+  disconnect}, to deauthenticate, {\tt send}, to send the results of
+the last command back to the client, {\tt receive}, to send data to
+the server for it to use as {\tt stdin} to the next command, and {\tt
+  command}, to execute a shell command on the server. 
+
+The client initiates a connection on the Oosh port, 12345, then
+authenticates and begins sending {\tt command} strings for the server
+to execute. The server runs these commands with the privileges of the
+user who started the server. A mature implementation would need to do
+a thorough security audit, particularly since there is no protection
+between different users logged in at the same time. 
+
+Each command sent to the server corresponds to a simplecommand in the
+grammar, so if the user enters the command {\tt a@remote | b@remote |
+  c@remote} this will become three separate messages to the server,
+{\tt command a}, {\tt command b}, {\tt command c} with the pipe being
+implicit. Therefore a loop where every simplecommand in the body is
+specified to be run remotely will result in every simplecommand
+producing a {\tt command} message to be sent to the server. This is
+not a performance problem under the assumption that the amount of data
+sent between processes vastly exceeds the number of simplecommands
+that need sending.
+
+Since the Oosh server only sends the results of computation back on
+demand, it enabled me to use a lazy data approach. Again if we
+consider {\tt a@remote | b@remote | c@remote}, only the result of the
+computation after {\tt c} has terminated will be sent back to the
+client. This optimisation is transparent to the user and does not
+affect results.
+
+A more interesting optimisation in Oosh is that of `command moving'. If
+the user runs the command {\tt oosh\_ps@remote | oosh\_project Command
+  PID} the {\tt oosh\_project} command acts as a filter and is
+location independent. Oosh recognises these commands (using a simple
+whitelist) and runs them on the same system as the previous command to
+reduce bandwidth consumption. This is safe (it does not change
+results) and is transparent to the user. The user may however
+explicitly state where a command is to be run and Oosh will respect
+that. The actual logic to decide to move the command is
+within the client, so this added no additional complexity to the
+client/server interaction. 
+
+This `command moving' optimisation assumes that bandwidth to the
+server is limited and the server has sufficient resources to run the
+additional commands. The typical use case of Bash with {\tt ssh} is
+that of running the remote server on a desktop or large server system
+so this assumption is probably valid.
+
+\begin{figure}
+\caption{Example of commands being run over network with command
+  moving. Note {\tt grep} has not had its location specified and so
+  runs remotely.}
+\begin{verbatim}
+Client:
+2$ connect@193.60.95.74 wilfred mypassword;
+     oosh_ls@193.60.95.74 /home/wilfred/logs | grep kde
+Filename               Owner   Size
+freenode_#kde-i18n.log wilfred 879
+freenode_#kde.log      wilfred 53318
+
+Server:
+$ ./ooshserver.py
+Starting server at soup.linux.pwf.cam.ac.uk (193.60.95.74) on port 12345
+request is ['connect', 'wilfred', mypassword']
+request is ['command', 'python3', 'oosh_ls.py', '/home/wilfred/logs']
+request is ['command', 'grep', 'kde']
+request is ['send']
+\end{verbatim}
+\end{figure}
+
+Note grep is run on the server despite not specifying. Also note the
+output of {\tt oosh\_ls} is not sent immediately, the client only
+requests it to be sent at the end.
+
 
 \section{Command Selection}
 In addition to the shell with its built-ins, I needed a selection of programs
@@ -588,10 +753,11 @@ database-like commands would be both familiar to the user and powerful. Another
 clear advantage of structured data is the ability to draw graphs, so an
 automatic graphing facility was created.
 
-I examined the selection of commands offered by BusyBox, as it aims to be a
-fairly minimal set of Unix commands required to make a system useful. Many
-commands were either interactive, set system settings or started daemons. None
-of these programs sent sufficient data to stdout for them to benefit from my
+I examined the selection of commands offered by BusyBox
+\cite{busybox}, as it aims to be a fairly minimal set of Unix commands
+required to make a system useful. Many commands were either
+interactive, set system settings or started daemons. None of these
+programs sent sufficient data to stdout for them to benefit from my
 new structured data approach.
 
 There were three types of commands I implemented. I implemented data
@@ -645,6 +811,40 @@ he can describe the data in a higher-order fashion.
   %\includegraphics[scale=0.4]{cpu_consumption.png}
 \end{figure}
 
+\section{Backward compatibility}
+
+Unix systems already have a very large number of command line
+tools. The PWF offers over 4000 commands to its users. Replacing all of these
+with Oosh equivalents would be intractable and many applications would
+not benefit from the Oosh design approach. I therefore created the
+facility for any Unix command to be run from within Oosh. 
+
+I implemented this using a simple namespace style design. All Oosh
+commands start with the prefix {\tt oosh\_}. The Oosh shell recognises
+this prefix and searches in the Oosh directory rather than the
+directories listed in the {\tt \$PATH} variable. This namespace scheme
+permits interleaving of Oosh commands and other commands. Since the
+Oosh data structure is line oriented, this interleaving ability is
+frequently useful. Commands such as {\tt grep} filter on a
+line-by-line basis, resulting in the data structure being
+inadvertantly preserved by these simple tools.
+
+\begin{figure}[h]
+\label{grepexample}
+\caption{An example of Oosh commands being interleaved with Unix commands}
+\begin{verbatim}
+2$ connect@193.60.95.74 wilfred mypassword;
+     oosh_ls@193.60.95.74 /home/wilfred/logs | grep kde
+Filename               Owner   Size
+freenode_#kde-i18n.log wilfred 879
+freenode_#kde.log      wilfred 53318
+\end{verbatim}
+\end{figure}
+
+In figure \ref{grepexample} we see {\tt grep} being used without
+modification but still producing valid Oosh data structures so the
+data may be pretty printed.
+
 \section{Problems Overcome}
 
 The largest problem I faced during coding was dealing with the limited
@@ -697,6 +897,7 @@ Finally, I also include some simple performance benchmarks based on system
 resource consumption and latency from the user's perspective.
 
 \section{Command Length}
+\label{commandlength}
 Since Oosh offers a higher level view of data, it should produce more concise
 commands that are also easier to read. Defining a typical workload is extremely
 difficult so instead I consider the best case scenarios.
@@ -805,7 +1006,7 @@ seen to be scaling linearly with respect to the number of files.
 Testing {\tt oosh\_ls} scaling allowed me to analyse the costs
 introduced by produced by my data structure. If we consider a sample
 piece of output from {\tt oosh\_ls} being run on the root directory,
-we obtain figure \ref{lsroot}. 
+we obtain figure \ref{lsroot}.
 % fixme: producing wrong cross-references
 
 \begin{figure}
@@ -946,7 +1147,7 @@ of Bash.
 % the bibliography
 
 \addcontentsline{toc}{chapter}{Bibliography}
-\begin{thebibliography}{5} % at most 5 citations
+\begin{thebibliography}{8} % at most 8 citations
 
 \bibitem{multics}
   Louis Pouzin
@@ -963,6 +1164,22 @@ of Bash.
   \emph{Design Document}
   http://fishshell.org/user\_doc/design.html
 
+\bibitem{busybox}
+  Denys Vlasenko
+  \emph{BusyBox: The Swiss Army Knife of Embedded Linux}
+  http://www.busybox.net/about.html
+
+\bibitem{clifu}
+  David Winterbottom
+  \emph{commandlinefu.com is the place record those command-line gems that
+  you return to again and again}
+  http://www.commandlinefu.com
+
+\bibitem{bashman}
+  Free Software Foundation
+  \emph{GNU bash manual}
+  http://www.gnu.org/software/bash/manual/
+
 \end{thebibliography}
 \cleardoublepage
 
@@ -972,75 +1189,6 @@ of Bash.
 
 \chapter{Example Usage}
 \label{examples}
-% populated from src/examples.txt
-
-\section{Simple Pipeline}
-\label{lsexample}
-A simple pipeline showing contextual data manipulation. Note tail is a part of
-GNU coreutils and is working in Oosh without modification.
-\begin{verbatim}
-1$ oosh_ls /usr/bin | oosh_project Filename Size | oosh_sort Size | tail
-Filename Size
-mencoder 10984340
-inkview  11074508
-inkscape 11100236
-mplayer  11758932
-bibtexu  17312116
-xetex    17799216
-xelatex  17799216
-skype    18567888
-\end{verbatim}
-
-\section{Networking}
-Connect to a server, run commands on it as if they are local commands. Also
-demonstrates reuse of semicolon for command sequences as found on other common
-shells.
-\begin{verbatim}
-2$ connect@193.60.95.74 wilfred mypassword;
-     oosh_ls@193.60.95.74 /home/wilfred/logs | grep kde
-Filename               Owner   Size
-freenode_#kde-i18n.log wilfred 879
-freenode_#kde.log      wilfred 53318
-\end{verbatim}
-
-Note grep is run on the server despite not specifying. Also note the
-output of {\tt oosh\_ls} is not sent immediately, the client only
-requests it to be sent at the end.
-
-\begin{verbatim}
-$ ./ooshserver.py
-Starting server at soup.linux.pwf.cam.ac.uk (193.60.95.74) on port 12345
-request is ['connect', 'wilfred', mypassword']
-request is ['command', 'python3', 'oosh_ls.py', '/home/wilfred/logs']
-request is ['command', 'grep', 'kde']
-request is ['send']
-\end{verbatim}
-
-\section{Control structures}
-\label{forexample}
-An example of the familiar command structures available in Oosh. The {\tt for}
-loop syntax is based on that of fish.
-\begin{verbatim}
-3$ for x in 131.111.8.42 131.111.12.20 131.111.131.1; do ping $x -c 1; end
-PING 131.111.8.42 (131.111.8.42) 56(84) bytes of data.
-64 bytes from 131.111.8.42: icmp_seq=1 ttl=252 time=0.400 ms
-
---- 131.111.8.42 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time 0ms
-rtt min/avg/max/mdev = 0.400/0.400/0.400/0.000 ms
-PING 131.111.12.20 (131.111.12.20) 56(84) bytes of data.
-64 bytes from 131.111.12.20: icmp_seq=1 ttl=252 time=0.433 ms
-
---- 131.111.12.20 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time 0ms
-rtt min/avg/max/mdev = 0.433/0.433/0.433/0.000 ms
-PING 131.111.131.1 (131.111.131.1) 56(84) bytes of data.
-64 bytes from 131.111.131.1: icmp_seq=1 ttl=63 time=0.338 ms
-
---- 131.111.131.1 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time 0ms
-rtt min/avg/max/mdev = 0.338/0.338/0.338/0.000 ms
-\end{verbatim}
 
 \section{Multi-way Pipes}
 Here we see an example of pipelines being saved. We also see an Oosh command
