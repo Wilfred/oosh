@@ -67,7 +67,7 @@ Churchill College \\
 \begin{tabular}{ll}
 Name:               & \bf Wilfred Hughes                       \\
 College:            & \bf Churchill College                     \\
-Project Title:      & \bf oosh: An object oriented shell \\
+Project Title:      & \bf Oosh: An object oriented shell \\
 Examination:        & \bf Computer Science Part II, 2009-2010        \\
 Word Count:         & \bf 1587 \\
 Project Originator: & \bf Wilfred Hughes                    \\
@@ -76,7 +76,8 @@ Supervisor:         & \bf David Eyers                    \\
 }
 
 \section*{Original Aims of the Project}
-% 72 words I planned to write a Unix shell from scratch in Python. It would
+% 72 words 
+I planned to write a Unix shell from scratch in Python. It would
 differ from traditional shells by enforcing a data structure on data piped
 between processes, so programs can reason about data at a higher level. It would
 also enable transparent network access using a lazy data fetch. Finally, the
@@ -142,7 +143,6 @@ shell topics to Oosh. These are J.\ Tippell in 2006, J.\ Harbin in
 \pagestyle{headings}
 
 \chapter{Introduction}
-% capitalisation conventions: Oosh, Bash, fish
 My project was to create a Unix shell from scratch. This gave me the opportunity
 to re-evaluate design decisions made by previous shell developers. I therefore
 explored a design that made today's common shell tasks easier.
@@ -177,7 +177,7 @@ backwards compatibility.
 Today's shells are therefore optimised for common use cases that are
 outdated. They have ill-specified languages, making it hard for the user to
 exercise confidence in preparing scripts---indeed, even implementing
-\texttt{sh}-compatible behaviour is non-trivial\cite{bourne}.
+\texttt{sh}-compatible behaviour is non-trivial \cite{bourne}.
 
 I revisited these assumptions. \texttt{who | wc} is not supported by the
 original grammar, and pipes are an early (but not an original) feature. How can
@@ -189,9 +189,9 @@ original shell formulation?
 I evaluated several well-known shells available today. One of the most popular
 options is Bash, which is the default on GNU/Linux and Mac OS X.
 
-A more recent alternative to Bash is the Friendly Interactive Shell (`fish'),
-released in 2005. fish is not a substantial departure from Bash, but breaks
-backwards compatibility. The design of fish\cite{fishdesign} is motivated by a
+A more recent alternative to Bash is the Friendly Interactive Shell (`Fish'),
+released in 2005. Fish is not a substantial departure from Bash, but breaks
+backwards compatibility. The design of Fish \cite{fisdhesign} is motivated by a
 desire to create a minimal, orthogonal scripting language. While it achieves
 these goals it still requires the user to perform dumb manipulations on
 unstructured text.
@@ -205,11 +205,11 @@ noun-verb naming scheme and the programmer is sometimes exposed to underlying
 Windows API for simple tasks such as basic networking.
 
 None of these existing solutions have support for transparent
-networking. Bash-like shells require the user to {\tt ssh} into the desired
-system, so building a pipeline with commands on varying hosts is
-non-trivial. PowerShell solutions are more heavyweight and vary for the cmdlet
-used. Some commands take a host as an argument whereas others take a network
-session object argument.
+networking. Bash-like shells require the user to {\tt ssh} into the
+desired system, so building a pipeline with commands on varying hosts
+is non-trivial. PowerShell solutions are more heavyweight and vary for
+the cmdlet used. Some Powershell cmdlets take a host as an argument
+whereas others take a network session object argument.
 
 \section{Requirements}
 I needed to create a shell that would be familiar to an experienced shell user,
@@ -219,28 +219,30 @@ commands as there are simply too many to reimplement all of them for a new
 design. My shell therefore needed to support the commands already available on
 the user's system.
 
-The scripting language that my shell would accept needed to be familiar to users
-of common shells available today. Any changes made needed to be justified as to
-how they made common use cases simpler. This included examining the pipeline
-metaphor in some depth and expanding it. One common use case is developing a
-shell command incrementally, whilst only being interested in the output of the
-final command. I concluded that the shell required the ability to save
-intermediate pipelines in a lightweight fashion.
+The scripting language that my shell would accept needed to be
+familiar to users of common shells available today. Any changes made
+needed to be justified as to how they made common use cases
+simpler. This included examining the pipeline metaphor in some depth
+and expanding upon it. One common use case is developing a shell
+command incrementally, whilst only being interested in the output of
+the final command. I concluded that the shell required the ability to
+save intermediate pipelines in a lightweight fashion.
 
-% used a data structure that was line based for compatibility
-I also needed to develop a data structure that would enable my programs to
-process data at a higher level. With my desire to work with current programs and
-aiming to maintain useful shell metaphors, I needed to preserve the concept of a
-pipeline as far as possible. This meant local commands needed to use the POSIX
-pipe primitive when pipelines were local. Since I wished to support interleaving
-of my commands and other commands, I required a data structure that was
-transmitted as structured text.
+I also needed to develop a data structure that would enable my
+programs to process data at a higher level. With my desire to work
+with current programs and aiming to maintain useful shell metaphors, I
+needed to preserve the basic concept of a pipeline as far as
+possible. This meant local commands needed to use the POSIX pipe
+primitive when pipelines were local. Since I wished to support
+interleaving of my commands and other commands, I required a data
+structure that was transmitted as structured text.
 
 With my data structure in place I needed a set of commands that would
 demonstrate the versatility of my design. This set needed to include commands
 that would produce structured data, commands that could manipulate this data and
 commands that would offer visualisations of this data.
 
+%todo: expand me
 Finally, I wanted my shell to support a convenient network abstraction. This
 required a simple client/server architecture and lightweight syntax to
 support it.
@@ -248,8 +250,8 @@ support it.
 \section{Development Approach}
 Since my design aimed to build on traditional shell design, extending
 an existing shell was an option worth considering, particularly since
-most Unix shells are available under an open-source lincense. I
-investigated building on top of Bash or fish, but both of these were
+most Unix shells are available under an open-source license. I
+investigated building on top of Bash or Fish, but both of these were
 substantial pieces of C code, most of which would require major
 changes to work with my intended features. For example, Fish uses a
 custom parser which is approximately 2000 lines of C code. Compatibility
@@ -282,7 +284,7 @@ my design.
   on the source code of Bash 4.1.}
 \stepcounter{footnote}
 
-% bash and fish: no proper grammar. hard to change guts for more radical
+% bash and Fish: no proper grammar. hard to change guts for more radical
 % features, no hackable grammar
 % python offered cmd.py which is skeleton shell
 % networking easier in python, text manipulation particularly so
@@ -293,12 +295,12 @@ my design.
 
 A shell is not as expressive as a programming language (sh was unusual in having
 optional ; in its day), and a REPL has a different feel. A shell optimises for
-few keystrokes for commands, simple system adminstration tasks, and so on. A
+few keystrokes for commands, simple system administration tasks, and so on. A
 shell has no floating point maths and limited integer support. Almost everything
 is exported to invoked processes to handle instead.
 
 % investigation -- compared to existing systems
-%   -- bash, fish, powershell, osh (Timoth Budd 1989), REPLs, cmd.exe
+%   -- bash, Fish, powershell, osh (Timoth Budd 1989), REPLs, cmd.exe
 %     -- macro language vs programming language
 %   -- bash particularly: lex and parse approach, backwards compat
 % requirements (from proposal)
@@ -575,14 +577,14 @@ create temporary files and does not conveniently generalise to network
 access, which requires {\tt scp} as well. Saved pipes are therefore
 only a convenience for the user, not a completely novel use case.
 
-Other notable ommissions from this design include subshells (backticks
+Other notable omissions from this design include subshells (backticks
 in Bash usage), arithmetic operations, function definitions, array
 variables and non-interactive usage. This turns out to rarely be a
 problem for the user. Subshells can be emulated with pipe
 saving. Arithmetic operations may be performed using the Unix {\tt bc}
 command, which is arguably a more Unix style design (conforming to the
 ``do one thing and do it well '' design mantra). The remaining
-ommissions are more difficult to work around but fall outside of the
+omissions are more difficult to work around but fall outside of the
 use cases being explored in Oosh.
 
 \begin{figure}[h]
@@ -715,9 +717,9 @@ but still move data across the network as needed.
 % need intro para
 
 The networking functionality was designed with two intentions: a concise,
-convenient syntax and efficient bandwith usage. Today a user can use Bash and
+convenient syntax and efficient bandwidth usage. Today a user can use Bash and
 SSH to run commands remotely, but running successive commands on different
-systems is not covenient.
+systems is not convenient.
 
 \begin{figure}
 \caption{Collecting data remotely and performing analysis locally
@@ -853,7 +855,7 @@ also implemented a data analyser that would draw graphs based on input
 data given in the Oosh data format.
 
 I named all these commands using an {\tt oosh\_} prefix. This enabled me
-to reuse command command names such as {\tt ls} without clashes. This
+to reuse command names such as {\tt ls} without clashes. This
 prefix also acted as a hook to call an Oosh command rather than look
 for Unix commands in {\tt \$PATH}.
 
@@ -886,7 +888,7 @@ sophisticated analyses of the data. I wrote a graphing utility that
 takes full advantage of this structure.
 
 My grapher, {\tt oosh\_graph}, simply requires the user to name the
-dataseries he wishes to plot and the type of graph he wants. This is
+data series he wishes to plot and the type of graph he wants. This is
 not impossible in Bash, but Oosh enables a more elegant approach since
 he can describe the data in a higher-order fashion.
 
@@ -912,7 +914,7 @@ permits interleaving of Oosh commands and other commands. Since the
 Oosh data structure is line oriented, this interleaving ability is
 frequently useful. Commands such as {\tt grep} filter on a
 line-by-line basis, resulting in the data structure being
-inadvertantly preserved by these simple tools.
+inadvertently preserved by these simple tools.
 
 \begin{figure}[h]
 \label{grepexample}
