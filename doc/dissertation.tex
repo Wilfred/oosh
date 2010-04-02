@@ -67,7 +67,7 @@ Churchill College \\
 \begin{tabular}{ll}
 Name:               & \bf Wilfred Hughes                       \\
 College:            & \bf Churchill College                     \\
-Project Title:      & \bf Oosh: An object oriented shell \\
+Project Title:      & \bf oosh: An object oriented shell \\
 Examination:        & \bf Computer Science Part II, 2009-2010        \\
 Word Count:         & \bf 1587 \\
 Project Originator: & \bf Wilfred Hughes                    \\
@@ -76,12 +76,12 @@ Supervisor:         & \bf David Eyers                    \\
 }
 
 \section*{Original Aims of the Project}
-% 72 words 
-I planned to write a Unix shell from scratch in Python. It would
-differ from traditional shells by enforcing a data structure on data piped
-between processes, so programs can reason about data at a higher level. It would
-also enable transparent network access using a lazy data fetch. Finally, the
-shell syntax would be simplified to minimise command length for common
+
+I planned to write a Unix shell from scratch in Python. It
+would enforce a data structure on data piped between processes, so
+programs can reason about data at a higher level. It would also enable
+transparent network access using a lazy data fetch. Finally, the shell
+syntax would be simplified to minimise command length for common
 instructions.
 
 \section*{Work Completed}
@@ -143,23 +143,6 @@ shell topics to Oosh. These are J.\ Tippell in 2006, J.\ Harbin in
 \pagestyle{headings}
 
 \chapter{Introduction}
-My project was to create a Unix shell from scratch. This gave me the opportunity
-to re-evaluate design decisions made by previous shell developers. I therefore
-explored a design that made today's common shell tasks easier.
-
-I developed a data format which enforces a tabular structure on data produced by
-programs. To demonstrate the versatility of this design I created a number of
-programs that could produce or manipulate this data format.
-
-Networking tasks are more common than ever, so my new design needed to include a
-convenient networking abstraction. I developed a simple client/server
-architecture that uses lazy data transfers to minimise bandwidth.
-
-% why this solution?
-
-\cleardoublepage
-
-\chapter{Preparation}
 
 \section{Historical Motivations}
 The command line shell (henceforth \emph{shell}) is one of the earliest user
@@ -170,19 +153,47 @@ using considerably shorter commands than using his programming language of
 choice. A shell scripting language, therefore, has always been an exchange of
 power for brevity.
 
-The original Bourne shell was a product of hacking and experimentation, so was
-never formally specified. The most popular successor is Bash, which has pursued
-backwards compatibility.
+The earliest shell that included modern shell features was the Bourne
+shell (known as {\tt sh}), developed by Stephen Bourne. It was
+released in 1977 as a part of Version 7 Unix. The most common shell in
+use today is Bash, which offers a superset of the features of {\tt
+  sh}. Bash seeks backwards compatibility with the Bourne shell
+wherever possible. Sadly the Bourne shell was a result of hacking and
+experimentation, so later attempts to retroactively produce a formal
+grammar that describes its behaviour have failed \cite{bourne}.
 
-Today's shells are therefore optimised for common use cases that are
-outdated. They have ill-specified languages, making it hard for the user to
-exercise confidence in preparing scripts---indeed, even implementing
-\texttt{sh}-compatible behaviour is non-trivial \cite{bourne}.
+This pursuit of backwards compatibility has resulted in today's shells
+being optimised for common use cases that are outdated. The language
+syntax they accept is unnecessarily complex, making it hard for the
+user to exercise confidence in writing scripts. Further the language
+has not been expanded or changed to make tasks that are typical today easier.
 
-I revisited these assumptions. \texttt{who | wc} is not supported by the
-original grammar, and pipes are an early (but not an original) feature. How can
-I make these commands simpler? What other use cases have emerged since the
-original shell formulation?
+I revisited these assumptions. How could I make today's common shell
+usage simpler? What other use cases would be desirable but are not
+supported by shells that are currently available?
+
+\section{The Purpose Of The Shell}
+I wanted to reconsider what it meant to be a shell. A shell is not as
+expressive as a programming language. Shell scripting languages have
+far fewer primitive data structures. They only offer a very limited
+range of arithmetic operations, usually only basic integer maths.
+
+Today's scripting languages fill a different niche. Python and Ruby
+have both become popular and both offer an interactive mode of
+operation. However they are more general purpose and so their syntax
+is too heavyweight for the typical system administration tasks that
+shells are used for. A simple directory listing in Python requires the
+user to {\tt import os} to import the necessary libraries then to run
+{\tt for x in os.listdir('.'): print(x)}. A shell is set up for
+precisely this type of task.
+
+A shell therefore has many implicit assumptions. Almost everything is
+expected to be handled by an external process according to the Unix
+design philosophy of ``do one thing and do it well''. As a result
+arithmetic is handled by {\tt bc}, file deletion by {\tt rm},
+compression by {\tt gzip}, and so on. As a result administration tasks
+become much easier in a shell than using a full scripting language
+interpreter.
 
 \section{Existing Solutions}
 % feature matrix/table?
@@ -191,7 +202,7 @@ options is Bash, which is the default on GNU/Linux and Mac OS X.
 
 A more recent alternative to Bash is the Friendly Interactive Shell (`Fish'),
 released in 2005. Fish is not a substantial departure from Bash, but breaks
-backwards compatibility. The design of Fish \cite{fisdhesign} is motivated by a
+backwards compatibility. The design of Fish \cite{fishdesign} is motivated by a
 desire to create a minimal, orthogonal scripting language. While it achieves
 these goals it still requires the user to perform dumb manipulations on
 unstructured text.
@@ -210,6 +221,30 @@ desired system, so building a pipeline with commands on varying hosts
 is non-trivial. PowerShell solutions are more heavyweight and vary for
 the cmdlet used. Some Powershell cmdlets take a host as an argument
 whereas others take a network session object argument.
+
+\section{My Design}
+
+As a result I decided to create a completely new shell with a new
+language that would be similar to experienced shell. I would
+re-evaluate design decisions made by previous shell developers. My
+design would seek to make today's common shell tasks easier.
+
+In addition to the language I would develop a data format that enable
+command line tools to output data in a more structured manner and
+include metadata that was machine-readable. To demonstrate the
+versatility of this data structure I would create a number of programs
+that could produce and/or manipulate data in this format.
+
+Since networking is much more prominent part of today's computer usage
+I concluded that my shell should include networking as a built-in
+rather than leaving it to an external program. This would require me
+to develop a simple client/server architecture. Since the shell itself
+would be aware of where commands were running, it would be able to use
+a intelligent data transfer scheme to minimise bandwidth.
+
+\cleardoublepage
+
+\chapter{Preparation}
 
 \section{Requirements}
 I needed to create a shell that would be familiar to an experienced shell user,
@@ -244,7 +279,7 @@ commands that would offer visualisations of this data.
 
 %todo: expand me
 Finally, I wanted my shell to support a convenient network abstraction. This
-required a simple client/server architecture and lightweight syntax to
+required a simple client/server architecture and a lightweight syntax to
 support it.
 
 \section{Development Approach}
@@ -292,12 +327,6 @@ my design.
 %% Typical CLI commands are developed iteratively, which is why commands print
 %% their usage guidelines if used incorrectly. Pipeline saving allows the user to
 %% develop his pipelines more incrementally.
-
-A shell is not as expressive as a programming language (sh was unusual in having
-optional ; in its day), and a REPL has a different feel. A shell optimises for
-few keystrokes for commands, simple system administration tasks, and so on. A
-shell has no floating point maths and limited integer support. Almost everything
-is exported to invoked processes to handle instead.
 
 % investigation -- compared to existing systems
 %   -- bash, Fish, powershell, osh (Timoth Budd 1989), REPLs, cmd.exe
