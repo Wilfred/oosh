@@ -924,7 +924,7 @@ he can describe the data in a higher-order fashion.
 \begin{figure}[h]
   \caption{A pie chart generated with {\tt oosh\_ps | oosh\_graph pie Command `CPU \%' cpu\_consumption.svg}}
   \centering
-  %\includegraphics[scale=0.4]{cpu_consumption.png}
+  \includegraphics[scale=0.4]{cpu_consumption.png}
 \end{figure}
 
 \section{Backward compatibility}
@@ -1231,32 +1231,66 @@ By contrast, % need some Bash measures here
 % hindsight thoughts -- better approaches
 % future prospects
 
-Characterising typical shell usage is difficult. I believe I created a
-compelling product. Ultimately very complex shell interactions are often moved
-to standalone applications. % contrast Gentoo's build scripts, a distro (Debian?)
-                           % moving to C init scripts
+\subsection{Overall Conclusions}
+Characterising typical shell usage is difficult. Developing Oosh
+demonstrated that it is possible to produce a more powerful shell
+metaphor provided that you only consider a limited subset of shell
+functionality. 
 
-The shell is used for quick and dirty tasks, collecting debugging output, simple
-file manipulations. Spawning processes ({\tt /etc/init.d/apache start}) and
-hardware configuration ({\tt ifconfig}) are also common shell usages which
-neither networking convenience or structured data can offer any great
-improvement on. Pervasive use of this data structure would offer more
-interesting usages, one good example being the {\tt /sys} directory. Tab
-completion would be another interesting area to explore, since commands can know
-column names (e.g. column name tab completion on oosh\_sort). To be used in
-production, Oosh would need to have the remaining shell features added, such as
-regular expression support (easy exercise given Python's support). Subshells and
-subcommands would be useful to a real user, though not adding anything to the
-proof-of-concept design.
+The number of typical commands that input or output sufficient data to
+benefit from the Oosh design is fairly small. Many common tasks, such
+as spawning processes ({\tt /etc/init.d/apache start}), using
+interactive commands ({\tt mutt}) and hardware configuration ({\tt
+  ifconfig}) would not benefit from either the networking features or
+the structured data format found in Oosh.
 
-% also problems with some data simply not being structured: apt-get upgrade,
-% wget, sophisticated interfaces: nano, emacs, irssi, lynx
-% line continuations would be nice too
+The networking functionality is excellent if you want to run pipes
+over multiple systems, but if you just want to run commands on a
+different system then the Oosh design is overly complex. The
+networking functionality is also more brittle as it is a part of the
+Oosh shell. This contrasts with the traditional Unix separation of
+responsibilities, which enables the user to choose between multiple
+networking programs (such as changing between {\tt ssh} and {\tt
+  telnet}).
 
-I did not take advantage of any of the optimising flags or profiling
-tools within Python, so there is some potential for
-improvement. Nonetheless, Oosh performance is not much worse than that
-of Bash.
+Ultimately very complex shell scripts are frequently rewritten as
+standalone application. Using {\tt ls} and {\tt ps} data to draw
+graphs is unnecessary on a Linux system where this is such a common
+task that a number of GUI applications are available to perform this
+role. Consequently it is difficult to find many limitations of
+current shells that a savvy user could not work around.
+
+%todo: finish
+Finally, Oosh is missing too many convenience features offered by
+competing shells. The language it accepts is too minimalistic, with
+the informally specificed semantics giving too little thought to
+errors, particularly with network interaction. To make the mostof the
+structured data format, all commands on the system would need to work
+with it. This would be major development effort for limited
+advantages. Nonetheless, using Bash after completing the project has
+occasionally resulted in scenarios where I felt I could really benefit
+from Oosh's higher level data manipulation.
+
+\subsection{Potential Future Enhancements}
+Throughout the project I found many features in common shells that are
+widely used but were outside the scope of Oosh. However to use Oosh as
+your primary shell would be very inconvenient without these.
+
+One obvious enhancement would be pervasive use of the Oosh data
+structure. There are a number of areas that would benefit from this,
+one good example being the {\tt /sys} directory which holds kernel
+generated hardware information.
+
+Other missing luxuries include line continuations, regular
+expressions, subshells (`backticks' in Bash) and tab completion. Tab
+completion in Oosh could be substantially more powerful than that of
+Bash, since commands can know column names.
+
+I also did not take advantage of any of the optimising flags or
+profiling tools within Python, so there probably is some potential for
+improvement in Oosh's performance. My benchmarks showed that Oosh
+performance was generally not much worse than that of Bash but large
+workloads may well benefit from some careful optimisation.
 
 \cleardoublepage
 
