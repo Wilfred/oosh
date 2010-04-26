@@ -10,6 +10,9 @@
 
 \usepackage{graphicx}
 
+% for rows spanning multiple columns in tables
+\usepackage{multirow}
+
 \input{epsf}                            % to allow postscript inclusions
 % On thor and CUS read top of file:
 %     /opt/TeX/lib/texmf/tex/dvips/epsf.sty
@@ -453,7 +456,7 @@ ps      0.0   0.0      6083 wilfred
 \caption{An example of sequential commands, pipeline saving and multipipes}
 \end{figure}
 
-\subsection{Pipes over networks}
+\subsection{Pipes Over Networks}
 
 A design principle used in Oosh was to examine how computer usage has
 changed and how today's shells could work better in these different
@@ -750,7 +753,6 @@ but still move data across the network as needed.
 
 \section{Networking}
 \label{networking}
-% need intro para
 
 The networking functionality was designed with two intentions: a concise,
 convenient syntax and efficient bandwidth usage. Today a user can use Bash and
@@ -793,7 +795,7 @@ remote system, forcing commands such as {\tt ssh wilfred@foo.com ps |
 local system only to send it back to the remote system.
 
 I firstly extended the Oosh syntax to allow this simple location
-specification using a hook in the evaluator (which is why it is not
+syntax using a hook in the evaluator (which is why it is not
 shown in the grammar specification). I then required a server/client
 architecture that would enable the user to run remote commands from
 his Oosh client as if they were local.
@@ -803,7 +805,7 @@ As a proof-of-concept, only single user interaction was necessary for
 my server. I therefore decided to avoid threading and also chose to
 use synchronous TCP sessions. The user authenticates himself to the
 server and is then able to issue commands to run on the server. Whilst
-I did not do I a thorough security evaluation, I attempted to use best
+I did not do a thorough security evaluation, I attempted to use best
 practices and so I used a salted SHA1 hash for password storage.
 
 Once the user has authenticated himself to the servers he wishes to
@@ -885,7 +887,7 @@ request is ['send']
 \end{figure}
 
 Note {\tt grep} is run on the server despite the user not specifying
-the host. Also note the output of {\tt oosh\_ls} is not sent
+the host. Also note that the output of {\tt oosh\_ls} is not sent
 immediately, the client explicitly requests it later on.
 
 \section{Command Selection}
@@ -900,8 +902,8 @@ I examined the selection of commands offered by BusyBox
 \cite{busybox}, as it aims to be a fairly minimal set of Unix commands
 required to make a system useful. Many commands were either
 interactive, set system settings or started daemons. None of these
-types of programs sent sufficient data to {\tt stdout} for them to benefit from my
-new structured data approach.
+types of programs sent sufficient data to {\tt stdout} for them to
+benefit from my new structured data approach.
 
 There were three types of commands I implemented. I implemented data
 sources, which write data to {\tt stdout} in the Oosh data format. I
@@ -969,7 +971,7 @@ higher-order fashion.
   \caption{A pie chart generated with {\tt oosh\_ps | oosh\_graph pie Command `CPU \%' cpu\_consumption.svg}}
 \end{figure}
 
-\section{Backward compatibility}
+\section{Backward Compatibility}
 
 Unix systems already have a very large number of command line
 tools. The PWF offers over 4000 commands to its users. Replacing all of these
@@ -1047,12 +1049,12 @@ selection of character count comparisons. I also include some data on the
 number of processes spawned between a typical Bash command and a typical Oosh
 command.
 
-I have also collected a set of networking benchmarks, which measure the
-effectiveness of my bandwidth optimisations versus a na\"{i}ve implementation. I
-measure both networking overhead and scaling.
+I have also collected a set of networking benchmarks, which measure
+the effectiveness of my bandwidth optimisations versus a na\"{i}ve
+implementation. I measure both networking overhead and scaling.
 
-Finally, I also include some simple performance benchmarks based on system
-resource consumption and latency from the user's perspective.
+Finally, I also include some simple performance benchmarks based on
+system resource consumption and latency from the user's perspective.
 
 \section{Command Length}
 \label{commandlength}
@@ -1066,10 +1068,12 @@ as a simple measure of complexity. The Halstead length is defined as
 the sum of the number of operators and operands and so avoids penalising
 conceptually simpler commands which happen to have longer names or arguments.
 
-% compare using standard unix commands plus shell redirection vs pipeline saving
+\begin{figure}[h]
 \begin{tabular}{|l|l|l|}
+\cline{2-3}
+\multicolumn{1}{l}{} & \multicolumn{2}{|c|}{Length} \\
 \hline
-Command sequence & Character count & Halstead length \\
+Command sequence & Characters & Halstead \\
 \hline
 {\tt ls /bin \textgreater /tmp/bin1.txt} & 96 & 14 \\
 {\tt ls /usr/bin \textgreater /tmp/bin2.txt} & & \\
@@ -1081,18 +1085,25 @@ Command sequence & Character count & Halstead length \\
 {\tt \textbar 1+2 oosh\_union \textbar \, grep python} & & \\
 \hline
 \end{tabular}
+\caption{Comparing standard Unix tools with shell redirection versus
+  pipeline saving}
+\label{pipesave}
+\end{figure}
 
-In this example Oosh produces a character saving despite command names being
-longer. The Halstead length is almost unchanged, so Oosh is not producing a
-substantial difference in command simplicity for the user. The pipeline
-redirection in Bash requires the user to choose a name for temporary data, an
-unnecessary overhead. The character count reduction therefore corresponds to a
-modest decrease in complexity for the user.
+In the example shown in figure \ref{pipesave} Oosh produces a
+character saving despite command names being longer. The Halstead
+length is almost unchanged, so Oosh is not producing a substantial
+difference in command simplicity for the user. The pipeline
+redirection in Bash requires the user to choose a name for temporary
+data, an unnecessary overhead. The character count reduction therefore
+corresponds to a modest decrease in complexity for the user.
 
-% a more sophisticated filtering example
+\begin{figure}[h]
 \begin{tabular}{|l|l|l|}
+\cline{2-3}
+\multicolumn{1}{l}{} & \multicolumn{2}{|c|}{Length} \\
 \hline
-Command sequence & Character count & Halstead length \\
+Command sequence & Characters & Halstead \\
 \hline
 {\tt ps aux | tail -n +2 | sort -k 3,3 | \textbackslash} & 76 & 25\\
 {\tt sed `s/ \textbackslash+/ /g' | cut -d " " -f 1,3,11-} & & \\
@@ -1101,6 +1112,8 @@ Command sequence & Character count & Halstead length \\
 9 \\
 \hline
 \end{tabular}
+\caption{Comparing data filtering between Bash and Oosh}
+\end{figure}
 
 This example, which uses filtering based on tabular data, benefits
 hugely from the Oosh design. The Oosh example uses slightly fewer
@@ -1128,12 +1141,90 @@ this.
 
 \section{Network Benchmarks}
 
-\section{Oosh Overheads}
+To measure the effectiveness of my networking design choices, I
+compared the following Oosh command with its equivalent using Bash and
+SSH:
 
+\subsubsection{Bash Session}
+\begin{verbatim}
+wilfred@alto:src:1$ ssh wilfred@127.0.0.1 ls test_data/100 | grep 0
+wilfred@127.0.0.1's password:
+10.txt
+100.txt
+20.txt
+30.txt
+40.txt
+50.txt
+60.txt
+70.txt
+80.txt
+90.txt
+\end{verbatim}
+
+\subsubsection{Oosh Session}
+\begin{verbatim}
+1$ connect@127.0.0.1 wilfred mypassword
+2$ ls@127.0.0.1 test_data/100 | grep 0
+10.txt
+100.txt
+20.txt
+30.txt
+40.txt
+50.txt
+60.txt
+70.txt
+80.txt
+90.txt
+3$ disconnect@127.0.0.1
+\end{verbatim}
+
+\subsection{Design Differences}
+Oosh only requires the user to authenticate once with each remote
+system and then he is able to run commands without further
+effort. Since we are running {\tt ssh} at the granularity of commands,
+we are forced to reauthenticate each time. The user may set up keys
+such that he does not need to type in his password every time however
+the handshake always occurs. The other distinction of the Oosh
+approach is that the user must explicitly log out.
+
+SSH encrypts all traffic, increasing CPU consumption although not
+meaningfully changing bandwidth consumption. Oosh sends data in
+plaintext.
+
+\subsection{Bandwidth Usage}
+Using Wireshark, a popular network traffic sniffer, I recorded all
+network traffic for Bash with SSH, Oosh with command moving, and Oosh
+without command moving. This enabled me to examine both the number of
+packets and total amount of data transmitted in each test.
+
+In the Bash with SSH test, 
+% 24 packets 5005 authentication
+% 6 packets 748 sending command
+% 6 packets 1436 bytes sending data back (grep was local)
+% 4 packets 264 bytes cleanup
+
+In the Oosh test without command moving:
+% 18 packets, 1259 bytes (but 11 were runt packets) authentication
+% 10 packets 708 bytes sending command
+% 10 packets 1373 sending data back (grep local)
+% 20 packets 1403 bytes cleanup
+
+Oosh with command moving:
+% 18 packets, 1259 bytes authentication
+% 10 packets 708 bytes sending first command
+% 10 packets 698 bytes sending 2nd command
+% 10 packets 752 bytes sending data back
+% 20 packets 1403 cleanup
+
+
+% Oosh is noisy, excessive number of TCP sessions (exposed for short
+% commands), too chatty acknowledgements of error presence or lack thereof
+
+\section{Oosh Overheads}
 I also conducted a series of benchmarks which measure the performance
 overhead of using Oosh instead of standard tools.
 
-\subsection{Overheads due to Oosh design choices}
+\subsection{Overheads Due To Oosh Design Choices}
 My first test compared running {\tt oosh\_ls} with {\tt ls} 6.12 from
 GNU coreutils on a collection of directories with contents of varying
 size. I generated these directories using the Bash command {\tt for x
@@ -1206,7 +1297,7 @@ data. As discussed in section \ref{othermeasures}, CPU consumption is
 more of a concern with Oosh so introducing compression would be
 unlikely to be a useful optimisation.
 
-\subsection{Latencies introduced by pretty printing}
+\subsection{Latencies Introduced By Pretty Printing}
 \label{prettyspeed}
 As discussed in section \ref{prettyimpl}, my pretty printing algorithm
 is $O(C \log C + CL)$ in time, where $C$ is the number of columns and
@@ -1237,7 +1328,7 @@ milliseconds required by the rest of the command execution), the
 performance of Oosh's pretty print is completely acceptable for small
 or medium sized quantities of data.
 
-\subsection{Other measures}
+\subsection{Other Measures}
 \label{othermeasures}
 
 I also performed a few simpler measures of resource

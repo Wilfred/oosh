@@ -123,7 +123,7 @@ class Oosh(Cmd):
         if not pipe_pointer is None:
             content = pipe_pointer.read().decode()
             if (len(content) > 0 and content[0] == '{' 
-                and 'noprint' not in debug_flags): 
+                and 'no-print' not in debug_flags): 
                 # data conforms to oosh structure
                 self.pretty_print(content)
             else:
@@ -296,6 +296,7 @@ class Oosh(Cmd):
         return process.stdout
 
     def decide_command_location(self, command_name, stdin):
+        global debug_flags
         # determine whether user has specified
         if self.specifies_location(command_name):
             specifies_remote = True
@@ -313,7 +314,9 @@ class Oosh(Cmd):
         # determine whether command can be safely moved
         safe_commands = ['grep', 'oosh_select', 'oosh_project', 'oosh_rename',
                          'oosh_sort']
-        if command_name in safe_commands:
+        if 'no-command-move' in debug_flags:
+            command_is_movable = False
+        elif command_name in safe_commands:
             command_is_movable = True
         else:
             command_is_movable = False
