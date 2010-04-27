@@ -518,8 +518,8 @@ removing the header of the data as there is with Bash.
 A piece of Oosh conformant data in the final design looks like this:
 
 \begin{verbatim}
-{'Name': 'strawberry', 'Colour': 'red', 'Family': 'fruit'}
-{'Family': 'vegetable', 'Name': 'potato'}
+{`Name': `strawberry', `Colour': `red', `Family': `fruit'}
+{`Family': `vegetable', `Name': `potato'}
 \end{verbatim}
 
 \subsection{Pretty Printing}
@@ -552,10 +552,10 @@ for text tools) based interface then this problem would be
 alleviated. Furthermore, if we consider the following data set:
 
 \begin{verbatim}
-{'Name': 'Jim', 'Age': 10}
-{'Name': 'John', 'Age': 36}
+{`Name': `Jim', `Age': 10}
+{`Name': `John', `Age': 36}
 ...many more lines...
-{'Name': 'Slartibartfast the Magrathean', 'Age': 68}
+{`Name': `Slartibartfast the Magrathean', `Age': 68}
 \end{verbatim}
 
 This would always print the name column very wide in Oosh, even if the last
@@ -572,12 +572,12 @@ rather than the global optimum.
 \label{rawdata}
 % fixme: fix incorrect quoting in output
 \begin{verbatim}
-{'Owner': 'wilfred', 'Size': 1013234, 'Filename': 'uucp-1.07.tar.gz'}
-{'Owner': 'wilfred', 'Size': 1152997, 'Filename': 'fish-1.23.1.tar.gz'}
-{'Owner': 'wilfred', 'Size': 1837, 'Filename': 'smlnj.tar.gz'}
-{'Owner': 'wilfred', 'Size': 6598300, 'Filename': 'bash-4.1.tar.gz'}
-{'Owner': 'wilfred', 'Size': 196529, 'Filename': 'xwrits-2.26.tar.gz'}
-{'Filename': 'plasma-weather-0.4.tar.gz', 'Size': 2480099}
+{`Owner': `wilfred', `Size': 1013234, `Filename': `uucp-1.07.tar.gz'}
+{`Owner': `wilfred', `Size': 1152997, `Filename': `fish-1.23.1.tar.gz'}
+{`Owner': `wilfred', `Size': 1837, `Filename': `smlnj.tar.gz'}
+{`Owner': `wilfred', `Size': 6598300, `Filename': `bash-4.1.tar.gz'}
+{`Owner': `wilfred', `Size': 196529, `Filename': `xwrits-2.26.tar.gz'}
+{`Filename': `plasma-weather-0.4.tar.gz', `Size': 2480099}
 \end{verbatim}
 Note we have rudimentary types here, distinguishing between strings and
 integers. The sort commands in Oosh take advantage of this.
@@ -619,9 +619,9 @@ access, which requires {\tt scp} as well. Saved pipes are therefore
 only a convenience for the user, not a completely novel use case.
 
 Other notable omissions from the final syntax include subshells
-(backticks in Bash usage), arithmetic operations, function definitions
-and array variables. This turns out to rarely be a problem for the
-user. Subshells can be emulated with pipe saving. Arithmetic
+(`backticks' in Bash usage), arithmetic operations, function
+definitions and array variables. This turns out to rarely be a problem
+for the user. Subshells can be emulated with pipe saving. Arithmetic
 operations may be performed using the Unix {\tt bc} command, which is
 arguably a more Unix style design (conforming to the ``do one thing
 and do it well'' design mantra). The remaining omissions are more
@@ -735,21 +735,37 @@ rtt min/avg/max/mdev = 0.338/0.338/0.338/0.000 ms
 \end{figure}
 
 \section{The Shell}
-The Oosh client is the largest single piece of code and can function without a
-server. Basic command line interaction is provided by the {\tt cmd.Cmd} object
-in the standard Python library. This meant the shell had supported basic user
-interaction and command history from very early on, allowing me to test the
-system as a whole. I was then able to add functionality and complexity
-iteratively, with the code largely functional at any given point in time.
+The Oosh client is the largest single piece of code and can function
+without a server as a standalone shell. Basic command line interaction
+is provided by the {\tt cmd.Cmd} object in the standard Python
+library. This meant the shell had supported basic user interaction and
+command history from very early on, allowing me to test the system as
+a whole. I was then able to add functionality and complexity
+iteratively, with the code largely functional at any given point in
+time.
 
-The shell itself takes input from the user on a line-by-line basis. Each line is
-lexed, parsed and the resulting parse tree is evaluated.
+The shell itself takes input from the user on a line-by-line
+basis. Each line is lexed, parsed and the resulting parse tree is
+evaluated. For this I took advantage of PLY (Python Lex-Yacc), which
+is a reimplementation of Lex and Yacc in Python but offers more
+helpful error messages. Once the syntax of language was finalised this
+was a simple matter of writing regular expressions for lexing and
+converting my grammar specification to a format that Yacc
+accepted. Evaluation is then a relatively simple recursive descent tree
+evaluator.
 
-% (simplified) picture of parse tree needed
-Within each pipeline % have pipelines been explained by this point?
-a {\tt PipePointer} is passed along to abstract away the actual location of the
-data. This enables the shell to use Unix pipes locally % would be good to benchmark this
-but still move data across the network as needed.
+During development it quickly became clear that I needed to use the
+pipe functionality provided by the operating system to allow multiple
+processes to communicate in the standard shell manner. However this
+native pipe is not useful for Oosh pipes running over the network so I
+developed a {\tt PipePointer} abstraction which enables the evaluator
+to treat all Oosh pipes in the same fashion. The {\tt PipePointer} is
+an object which either encapsulates a native pipe address or the
+location of a remote process. In the case of remote data the {\tt
+  PipePointer} handles fetching the data and decoding it
+appropriately. This was the central element of my `lazy data'
+approach, enabling Oosh to only fetch the data from the remote system
+at the last moment.
 
 \section{Networking}
 \label{networking}
@@ -758,11 +774,6 @@ The networking functionality was designed with two intentions: a concise,
 convenient syntax and efficient bandwidth usage. Today a user can use Bash and
 SSH to run commands remotely, but running successive commands on different
 systems is not convenient.
-
-% fixme: broken example
-% faults with ssh:
-% repeated authentication
-% no higher level optimisation
 
 \begin{figure}[h]
 \begin{verbatim}
@@ -1197,19 +1208,61 @@ network traffic for Bash with SSH, Oosh with command moving, and Oosh
 without command moving. This enabled me to examine both the number of
 packets and total amount of data transmitted in each test.
 
-In the Bash with SSH test, 
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.5]{network_graph.png}
+\caption{Contrasting bandwidth usage between Bash with SSH and Oosh,
+  and measure the effect of command moving}
+\label{networkgraph}
+\end{figure}
+
+Figure \ref{networkgraph} gives a side-by-side comparison of total
+data sent for each of the three tests. The Bash with SSH test
+demonstrates the additional complexity of the SSH authentication
+protocol. This would be exacerbated if the user was performing a
+series of commands over SSH as the authentication would be repeated
+each time.
+
+In the Oosh tests shown on the graph, there is noticeably less traffic
+at the authentication stage due to the simpler protocol. Using the
+command moving optimisation reduced the amount of data sent back from
+1373 bytes (still slightly less than the 1436 bytes of SSH) to 698
+bytes. However moving {\tt grep} to the remote system incurred a cost
+(not shown on the graph) of 698 additional bytes for the second
+command. Command moving in this example therefore only provides a very
+modest bandwidth saving so savings are highly dependent on usage.
+
+There is also a marked contrast between the 264 bytes required to
+close the connection with SSH and the 1403 bytes required by
+Oosh. This is partly due to Oosh requiring an explicit disconnection,
+but examining the traffic logs shows that Oosh initiates too many TCP
+sessions. When the client initiates a session to the server the server
+also starts a separate session to the client. This is clearly wasteful
+because a single TCP connection supports duplex communication. Much of
+the Oosh bandwidth is therefore wasted on TCP setup and teardown. The
+1403 bytes consisted of 20 packets, much larger than SSH which only
+used 4. Consequently the average packet size during Oosh cleanup was
+only 70 bytes. Since an empty TCP packet is 66 bytes, clearly most of 1403
+bytes is superfluous.
+
+Other optimisations become visible here as well. Oosh server commands
+are sent as strings, and verbose error results are sent back as
+strings, even on successful execution. The Oosh protocol is too chatty and a
+shorter encoding for commands would also improve efficiency.
+
+% bash with ssh:
 % 24 packets 5005 authentication
 % 6 packets 748 sending command
 % 6 packets 1436 bytes sending data back (grep was local)
 % 4 packets 264 bytes cleanup
 
-In the Oosh test without command moving:
+% Oosh test without command moving:
 % 18 packets, 1259 bytes (but 11 were runt packets) authentication
 % 10 packets 708 bytes sending command
 % 10 packets 1373 sending data back (grep local)
 % 20 packets 1403 bytes cleanup
 
-Oosh with command moving:
+% Oosh with command moving:
 % 18 packets, 1259 bytes authentication
 % 10 packets 708 bytes sending first command
 % 10 packets 698 bytes sending 2nd command
@@ -1258,30 +1311,30 @@ we obtain figure \ref{lsroot}.
 
 \begin{figure}
 \begin{verbatim}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'root'}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'media'}
-{'Owner': 'root', 'Size': 0, 'Filename': '.servers'}
-{'Owner': 'root', 'Size': 0, 'Filename': '.ux'}
-{'Owner': 'root', 'Size': 3072, 'Filename': 'boot'}
-{'Owner': 'wrah2', 'Size': 512, 'Filename': 'apps'}
-{'Owner': 'root', 'Size': 12288, 'Filename': 'etc'}
-{'Owner': 'root', 'Size': 4540, 'Filename': 'dev'}
-{'Owner': 'root', 'Size': 0, 'Filename': 'proc'}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'opt'}
-{'Owner': 'root', 'Size': 0, 'Filename': 'servers'}
-{'Owner': 'root', 'Size': 36864, 'Filename': 'tmp'}
-{'Owner': 'root', 'Size': 12288, 'Filename': 'authcon'}
-{'Owner': 'root', 'Size': 12288, 'Filename': 'sbin'}
-{'Owner': 'root', 'Size': 0, 'Filename': 'sys'}
-{'Owner': 'root', 'Size': 12288, 'Filename': 'lib'}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'bin'}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'usr'}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'var'}
-{'Owner': 'wrah2', 'Size': 512, 'Filename': 'ux'}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'srv'}
-{'Owner': 'root', 'Size': 4096, 'Filename': 'mnt'}
-{'Owner': 'root', 'Size': 16384, 'Filename': 'lost+found'}
-{'Owner': 'root', 'Size': 12288, 'Filename': 'home'}
+{`Owner': `root', `Size': 4096, `Filename': `root'}
+{`Owner': `root', `Size': 4096, `Filename': `media'}
+{`Owner': `root', `Size': 0, `Filename': `.servers'}
+{`Owner': `root', `Size': 0, `Filename': `.ux'}
+{`Owner': `root', `Size': 3072, `Filename': `boot'}
+{`Owner': `wrah2', `Size': 512, `Filename': `apps'}
+{`Owner': `root', `Size': 12288, `Filename': `etc'}
+{`Owner': `root', `Size': 4540, `Filename': `dev'}
+{`Owner': `root', `Size': 0, `Filename': `proc'}
+{`Owner': `root', `Size': 4096, `Filename': `opt'}
+{`Owner': `root', `Size': 0, `Filename': `servers'}
+{`Owner': `root', `Size': 36864, `Filename': `tmp'}
+{`Owner': `root', `Size': 12288, `Filename': `authcon'}
+{`Owner': `root', `Size': 12288, `Filename': `sbin'}
+{`Owner': `root', `Size': 0, `Filename': `sys'}
+{`Owner': `root', `Size': 12288, `Filename': `lib'}
+{`Owner': `root', `Size': 4096, `Filename': `bin'}
+{`Owner': `root', `Size': 4096, `Filename': `usr'}
+{`Owner': `root', `Size': 4096, `Filename': `var'}
+{`Owner': `wrah2', `Size': 512, `Filename': `ux'}
+{`Owner': `root', `Size': 4096, `Filename': `srv'}
+{`Owner': `root', `Size': 4096, `Filename': `mnt'}
+{`Owner': `root', `Size': 16384, `Filename': `lost+found'}
+{`Owner': `root', `Size': 12288, `Filename': `home'}
 \end{verbatim}
 \caption{Output of {\tt oosh\_ls /} without pretty printing}
 \label{lsroot}
@@ -1361,7 +1414,7 @@ this may become a problem.
 % hindsight thoughts -- better approaches
 % future prospects
 
-\subsection{Overall Conclusions}
+\section{Overall Conclusions}
 Characterising typical shell usage is difficult. Developing Oosh
 demonstrated that it is possible to produce a more powerful shell
 metaphor provided that you only consider a limited subset of shell
@@ -1401,7 +1454,7 @@ advantages. Nonetheless, using Bash after completing the project has
 occasionally resulted in scenarios where I felt I could really benefit
 from Oosh's higher level data manipulation.
 
-\subsection{Potential Future Enhancements}
+\section{Potential Future Enhancements}
 Throughout the project I found many features in common shells that are
 widely used but were outside the scope of Oosh. However to use Oosh as
 your primary shell would be very inconvenient without these.
@@ -1483,8 +1536,6 @@ workloads may well benefit from some careful optimisation.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % the appendices
 \appendix
-
-\chapter{Benchmark data}
 
 \chapter{Project Proposal}
 % makepdf.sh creates proposal_include.text
