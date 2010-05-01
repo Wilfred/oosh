@@ -165,21 +165,23 @@ wherever possible. Sadly the Bourne shell was a result of hacking and
 experimentation, so later attempts to retroactively produce a formal
 grammar that describes its behaviour have failed \cite{bourne}.
 
-This pursuit of backwards compatibility has resulted in today's shells
-being optimised for common use cases that are outdated. The language
-syntax they accept is unnecessarily complex, making it hard for the
-user to exercise confidence in writing scripts. Further the language
-has not been expanded or changed to make tasks that are typical today easier.
+This pursuit of backwards compatibility has limited the scope for
+radical change to shell metaphors. The language syntax they accept is
+unnecessarily complex, making it hard for the user to exercise
+confidence in writing scripts. Further the language has not been
+expanded or changed to make tasks that are typical today easier.
 
-I revisited these assumptions. How could I make today's common shell
-usage simpler? What other use cases would be desirable but are not
-supported by shells that are currently available?
+I revisited these assumptions. How could I make today's shell usage
+simpler? What other use cases would be desirable but are not supported
+by shells that are currently available?
 
 \section{The Purpose of the Shell}
-I wanted to reconsider what it meant to be a shell. A shell is not as
-expressive as a programming language. Shell scripting languages have
-far fewer primitive data structures. They only offer a very limited
-range of arithmetic operations, usually only basic integer maths.
+I wanted to reconsider what it meant for a program to be a shell. A
+shell is not as expressive as a mainstream programming language. Shell
+scripting languages typically have far fewer primitive data
+structures, with some shells only offering a string data type. They
+also only offer a very limited range of arithmetic operations, usually
+only basic integer maths.
 
 Today's scripting languages fill a different niche. Python and Ruby
 have both become popular and both offer an interactive mode of
@@ -190,10 +192,10 @@ user to {\tt import os} to import the necessary libraries then to run
 {\tt for x in os.listdir(`.'): print(x)}. A shell is designed to suit
 precisely this type of task.
 
-A shell therefore has many implicit assumptions. Almost everything is
-expected to be handled by an external process according to the Unix
-design philosophy of ``do one thing and do it well''. As a result
-arithmetic is handled by {\tt bc}, file deletion by {\tt rm},
+A shell is therefore optimised for a specific type of usage. Almost
+everything is expected to be handled by an external process according
+to the Unix design philosophy of ``do one thing and do it well''. As a
+result arithmetic is handled by {\tt bc}, file deletion by {\tt rm},
 compression by {\tt gzip}, and so on. Consequently administration
 tasks become much easier in a shell than using a full scripting
 language interpreter.
@@ -201,7 +203,8 @@ language interpreter.
 \section{Existing Solutions}
 % feature matrix/table?
 I evaluated several well-known shells available today. One of the most popular
-options is Bash, which is the default on GNU/Linux and Mac OS X.
+options is Bash, which is the default on most GNU/Linux distributions
+and Mac OS X (since version 10.3).
 
 A more recent alternative to Bash is the Friendly Interactive Shell (`Fish'),
 released in 2005. Fish is not a substantial departure from Bash, but breaks
@@ -224,18 +227,18 @@ None of these existing solutions have support for transparent
 networking. Bash-like shells require the user to {\tt ssh} into the
 desired system, so building a pipeline with commands running on
 varying hosts is non-trivial. PowerShell solutions are more
-heavyweight and use different calling conventions for different
+heavyweight and use inconsistent calling conventions for different
 cmdlets.
 
 \section{My Design}
 I decided to create a completely new shell with a new
-language that would be similar to experienced shell users. I would
+language that would be familiar to experienced shell users. I would
 re-evaluate design decisions made by previous shell developers. My
 design would seek to make today's common shell tasks easier to invoke.
 
 In addition to the language I would develop a data format that enables
 command line tools to output data in a more structured manner and
-include metadata that was machine-readable. To demonstrate the
+include metadata that would be machine-readable. To demonstrate the
 versatility of this data structure I would create a number of programs
 that could produce and/or manipulate data in this format.
 
@@ -253,31 +256,30 @@ to execute shell commands.
 
 \section{Requirements}
 I needed to create a shell that would feel familiar to an experienced
-shell user, so my shell would follow shell conventions where
-sensible. Any shell that hopes to be useful for a majority of users
-must be compatible with existing Unix commands as there are simply too
-many to reimplement all of them for a new design. My shell therefore
-also needed to support the commands already available on the user's
-system.
+shell user, so my shell would follow existing shell conventions,
+except where there was a clear benefit from deviating. Any shell that
+hopes to be useful for a majority of users must be compatible with
+existing Unix commands as there are simply too many to reimplement all
+of them for a new design. My shell therefore also needed to support
+the commands already available on the user's system.
 
 The scripting language that my shell would accept needed to feature a
 syntax that was reminiscent of today's common shell scripting
-languages.  Any changes made needed to be justified as to how they
-made common use cases simpler. This included examining the pipe
-metaphor in some depth and expanding upon it. One common technique is
-developing a shell command incrementally, whilst only being interested
-in the output of the final command. I concluded that the shell
-required the ability to save intermediate results in a lightweight
-fashion.
+languages. This included examining the pipe metaphor in some depth and
+expanding upon it. One common technique is developing a shell command
+incrementally, whilst only being interested in the output of the final
+command. I concluded that the shell required the ability to save
+intermediate results in a lightweight fashion.
 
 I also needed to develop a data structure that would enable my
-programs to process data at a higher level. With my desire to work
-with current programs and aiming to maintain useful shell metaphors, I
-needed to preserve the basic concept of a pipeline as far as
-possible. This meant local commands needed to use the POSIX pipe
-primitive when pipelines were local. Since I wished to support
-interleaving of my commands and other commands, I required a data
-structure that was transmitted as structured text.
+programs to process data in a manner that took advantage of the
+metadata present. With my desire to work with current programs and
+aiming to maintain useful shell metaphors, I needed to preserve the
+basic concept of a pipe as far as possible. This meant local
+commands needed to use the POSIX pipe primitive when pipes were
+local. Since I wished to support interleaving of my commands and other
+commands, I required a data structure that was transmitted as
+structured text.
 
 With my data structure in place I needed a set of commands that would
 demonstrate the versatility of my design. This set needed to include commands
@@ -300,17 +302,16 @@ investigated building on top of Bash or Fish, but both of these were
 substantial pieces of C code, much of which would require major
 changes to work with my intended features. For example, Fish uses a
 custom parser which is approximately 2000 lines of C code. There were
-no obvious benefits for the additional effort. I concluded that
+no clear benefits for the additional effort. I concluded that
 starting afresh was my best option.
 
-Since I was developing a tool for a modern Unix system, I chose a
-workflow that followed today's Unix coding practices. I chose to write
-my shell in Python, a modern scripting language, used Emacs as my
-editor and used Git, a distributed version control system to track
-changes. By the same logic I chose to host my code on GitHub, which
-had the additional benefit of acting as an off-site backup. Later on I
-needed a parser and lexer so chose Python implementations of Lex and
-Yacc as these are also standard tools.
+I chose a workflow that emulated programmers whose work I admire. I
+chose to write my shell in Python, a modern scripting language, used
+Emacs as my editor and used Git, a distributed version control system
+to track changes. For the same reason I chose to host my code on GitHub,
+which had the additional benefit of acting as an off-site
+backup. Later on I needed a parser and lexer so chose Python
+implementations of Lex and Yacc as these are also well respected tools.
 
 My initial specification was very broad, which enabled me to use a
 fairly exploratory style of coding. My final grammar is in section
@@ -334,9 +335,9 @@ my design.
 % python offered cmd.py which is skeleton shell
 % networking easier in python, text manipulation particularly so
 
-%% Typical CLI commands are developed iteratively, which is why commands print
-%% their usage guidelines if used incorrectly. Pipeline saving allows the user to
-%% develop his pipelines more incrementally.
+%% Typical CLI commands are developed iteratively, which is why
+%% commands print their usage guidelines if used incorrectly. Pipeline
+%% saving allows the user to develop his pipelines more incrementally.
 
 % investigation -- compared to existing systems
 %   -- bash, Fish, powershell, osh (Timoth Budd 1989), REPLs, cmd.exe
@@ -362,12 +363,6 @@ my design.
 \cleardoublepage
 
 \chapter{Implementation}
-% features:
-% strict data format
-% interleave new commands
-% primitive namespacing
-% familiar syntax
-
 The final result of my project was the shell client itself, a simple server and
 a selection of commands that understood the Oosh data structures. I also wrote
 some simple scripts to demonstrate the power and flexibility of my design.
@@ -377,7 +372,7 @@ describing a major feature of Oosh. In each section I also give an example
 of this feature being used, along with its resulting output. This
 should clarify how these techniques work in practice.
 
-\section{Pipelines}
+\section{Pipes}
 A major focus of Oosh's design is making the concept of pipes more powerful than
 the options available on current shells. Oosh generalises the concept of pipes
 to enable multiple commands to have their output piped into a single input. It
@@ -416,7 +411,9 @@ $ |3 grep libkde
 
 The administrator is now able to reason about previously generated data in a
 simpler manner. He can also refer back to previously generated results
-even if he cannot generate the data again.
+even if he cannot generate the data again. Unlike generating temporary
+files, he does not need to consider where to save the data and can
+easily use the saved pipes in a multipipe.
 
 An experienced Bash user could use output redirection to achieve the
 same effect as the Oosh example. This is discussed in section
@@ -431,14 +428,14 @@ $ diff /tmp/1 /tmp/2 >/tmp/3
 $ grep libkde </tmp/3
 \end{verbatim}
 
-For pipeline saving I reused the pipe character to clarify that pipe
-saving is similar to the Unix pipeline metaphor and can be used in a
+For pipe saving I reused the pipe character to clarify that pipe
+saving is similar to the Unix pipe metaphor and can be used in a
 similar way.
 
 \subsection{Multipipes}
 
-The traditional pipeline metaphor only allows one pipe into a
-program. A Bash user is forced to write each output out to a file
+The traditional pipe metaphor only allows one pipe into a program. A
+Fish or {\tt sh} user is forced to write each output out to a file
 somewhere if he wishes to use commands such as {\tt cat} or {\tt
   diff}.
 
@@ -466,7 +463,7 @@ python3 0.0   0.3      6081 wilfred
 sh      0.0   0.0      6082 wilfred
 ps      0.0   0.0      6083 wilfred
 \end{verbatim}
-\caption{An example of sequential commands, pipeline saving and
+\caption{An example of sequential commands, pipe saving and
   multipipes}
 \label{multipipe}
 \end{figure}
@@ -833,7 +830,7 @@ $ ps@remote.com | grep@localhost root
 
 An experienced user may observe that figure \ref{sshremote} may be
 simplified to {\tt ssh wilfred@foo.com ps | grep root}. However {\tt ssh}
-is inflexible and the user cannot create pipelines that run on the
+is inflexible and the user cannot create pipes that run on the
 remote system, forcing commands such as {\tt ssh wilfred@foo.com ps |
   ssh wilfred@foo.com grep root} to send data from the remote {\tt ps} to the
 local system only to send it back to the remote system.
@@ -856,7 +853,7 @@ Once the user has authenticated himself to the servers he wishes to
 use, he can specify (on the client) the location where he wishes each
 command to be run. The client will automatically initiate commands on the
 server and requests the resulting data as late as possible. This
-enables the server to use native pipelines locally.
+enables the server to use native pipes locally.
 
 The server supports the following commands: {\tt connect}, to
 authenticate a new user, {\tt disconnect}, to deauthenticate, {\tt
@@ -921,10 +918,10 @@ freenode_#kde.log      wilfred 53318
 Server:
 $ ./ooshserver.py
 Starting server at soup.linux.pwf.cam.ac.uk (193.60.95.74) on port 12345
-request is ['connect', 'wilfred', mypassword']
-request is ['command', 'python3', 'oosh_ls.py', '/home/wilfred/logs']
-request is ['command', 'grep', 'kde']
-request is ['send']
+request is [`connect', `wilfred', `mypassword']
+request is [`command', `python3', `oosh_ls.py', `/home/wilfred/logs']
+request is [`command', `grep', `kde']
+request is [`send']
 \end{verbatim}
   \caption{Example of commands being run over a network with command
     moving. Note that {\tt grep} has not had its location specified
@@ -1126,14 +1123,14 @@ Command sequence & Characters & Halstead \\
 \hline
 \end{tabular}
 \caption{Comparing standard Unix tools with shell redirection versus
-  pipeline saving}
+  pipe saving}
 \label{pipesave}
 \end{figure}
 
 In the example shown in figure \ref{pipesave} Oosh produces a
 character saving despite command names being longer. The Halstead
 length is almost unchanged, so Oosh is not producing a substantial
-difference in command simplicity for the user. The pipeline
+difference in command simplicity for the user. The pipe
 redirection in Bash requires the user to choose a name for temporary
 data, an unnecessary overhead. The character count reduction therefore
 corresponds to a modest decrease in complexity for the user.
