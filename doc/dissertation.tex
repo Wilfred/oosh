@@ -474,15 +474,17 @@ A design principle used in Oosh was to examine how computer usage has
 changed and how today's shells could work better in these different
 use cases. It quickly became clear that networking is cumbersome and
 it would be better if pipes worked over networks as if they were
-local.
+local. Although a user may use {\tt rsh} or {\tt ssh} to use pipes
+over the network, the shell itself is unaware this is going on. Since
+networking is a part of the Oosh shell there are various optimisation
+possibilities open to me.
 
 A Bash user has two options when working with remote systems: he can
 either mount the remote system on his local system, or use {\tt
   ssh}. If he mounts the remote system all computation must be
 performed on his local system. If he uses {\tt ssh} he must either
 start a shell session remotely and create files to {\tt scp} (the
-remote copy program) back or use {\tt ssh} for each command
-individually.
+remote copy program) back or use {\tt ssh} to build a pipeline.
 
 The Oosh solution is easier to work with. The user must {\tt connect}
 to each of the remote systems he wishes to work with, then any
@@ -495,18 +497,19 @@ attempts to minimise bandwidth consumption. This syntax is modelled on
 that of email, which should make Oosh scripts readable to new users.
 
 \section{Data Structures}
-My initial design was to have structured data pass through pipes between the
-commands, but this still left me with a variety of implementation
-possibilities. The data I wanted to manipulate turned out to fit a tabular
-format well, so as I iteratively developed the data structure, I
-focused on representations in which the data was stored with its metadata
-in rows.
+Although my initial design specified that I would have structured data
+pass through pipes between the commands, I still had a variety of
+implementation possibilities. The data I wanted to manipulate turned
+out to fit a tabular format well, so as I iteratively developed the
+data structure, I focused on representations in which the data was
+divided into rows, with metadata stored inline.
 
 One of my initial ideas was to use an object oriented programming
-approach, so my first prototype used an object that encapsulated
-a row. However successive refactorings reduced this object to the point
-wherein I was able to replace it entirely with Python {\tt dict}s (the mapping
-structure primitive in Python, which acts as a mutable hash table).
+approach, so my first prototype used an object that encapsulated a
+row. However successive refactorings reduced this object to the point
+wherein I was able to replace it entirely with Python {\tt dict}s (the
+mapping structure primitive in Python, which acts as a mutable hash
+table).
 
 Another design criterion was the data structure had to be passed as
 text between processes if I wanted to use underlying Unix
@@ -515,9 +518,9 @@ standard Python primitives so that I was able to write out a text
 representation using {\tt \_\_repr\_\_()} and convert it back using
 {\tt eval()}. Both of these are provided by Python, saving me from
 having to write any substantial conversion code myself. Using {\tt
-  eval()} normally introduces some potential for security bugs that
-facilitate arbitrary code execution, however as a shell is a
-programming environment in its own right this is not a problem.
+  eval()} introduces the potential for arbitrary code execution. Since
+Oosh is only a proof of concept program I decided that developing
+thorough data sanitisation methods was not a focus of the project.
 
 My final design separates lines of structured data with the newline
 character in the text stream. This enables the interleaving of
@@ -549,30 +552,38 @@ A piece of Oosh conformant data in the final design looks like this:
 \label{prettyimpl}
 Since traditional Unix commands output data in an unstructured way,
 output forms vary widely. In contrast, Oosh requires a tabular format,
-so it naturally follows to develop a more sophisticated pretty print
-that is run by the shell on all conformant data.
+so the same pretty print method can be run each time on all conformant
+data.
 
-The pretty print functionality I developed is coloured, uses
-character-perfect layout and supports heterogeneous lines of
-data. This ensures that each column is printed at optimum width for
-the given data. The Oosh data format is relatively permissive,
-permitting columns to be in any order within each row or even omitted
-completely so supporting this heterogeneity is crucial in order to
-ensure that every item in each row is printed in a manner consistent
-with the user's expectations.
+The pretty print functionality I developed is coloured, pads each
+column to give a perfect alignment and supports heterogeneous lines of
+data. Rather than simply using tab characters to separate columns, the
+pretty print finds the longest entry in each column and ensures that
+the column is exactly one character wider than this entry. This
+ensures that each column is printed at optimum width for the given
+data.
+
+The Oosh data format is relatively permissive, permitting columns to
+be in any order within each row or even omitted completely so
+supporting this heterogeneity is crucial in order to ensure that every
+item in each row is printed in a manner consistent with the user's
+expectations.
 
 The algorithm I designed takes lines of Oosh output as input and finds
 the optimum layout. This has a time complexity of $O(C \log C + CL)$,
 where $L$ is the number of lines, and $C$ the number of columns. A
-thorough speed analysis in performed in section \ref{prettyspeed}.
+thorough speed analysis and stress test in performed in section
+\ref{prettyspeed}.
 
 The disadvantage of my design is that it requires that a command
 entered by the user must have finished being evaluated before the
-output can be pretty-printed and shown to the user. However, it is
-only really necessary that one screenful of data is printed in a
-character perfect manner, so if the Oosh shell was rewritten with a
-curses\footnotemark[2] based interface then this problem would be
-alleviated. Furthermore, if we consider the following data set:
+output can be pretty printed and shown to the user. A better solution
+would be to only pretty print the data currently visible on screen,
+which would improve latency. If the Oosh shell was rewritten with a
+curses\footnotemark[2] based interface then the shell could learn how
+much data was visible onscreen and use this better approach.
+
+Furthermore, if we consider the following data set:
 
 \footnotetext[2]{Curses is a library used for creating full screen
   interfaces for text tools.}
@@ -658,6 +669,10 @@ mantra). The remaining omissions are more difficult to work around but
 fall outside of the usage being targeted by Oosh.
 
 \subsection{Formal Language Specification}
+I list below the language that the parser accepts. Non-terminals are
+marked with angle brackets, terminals that are reserved words are in a
+{\tt monospaced} font and other terminals are written in capitals.
+
 \label{grammar}
 \begin{grammar}
       [(colon){$::=$}]
@@ -666,31 +681,32 @@ fall outside of the usage being targeted by Oosh.
       [(quote){}{}] % grim hack since ; has meaning so we use ";"
 <commands> : <commands>";" <commands>\\
 % grim hack to force indentation
-\textcolor{white}{tab};commands NAMEDPIPE\\
+\textcolor{white}{tab};<commands> NAMEDPIPE\\
 \textcolor{white}{tab};<while> ;<if> ;<assign> ;<for> ;<command> ;$\epsilon$
 
-<for> : for STRING in <values>";" do <commands>";" end
+<for> : {\tt for} STRING {\tt in} <values>{\tt ";" do} <commands>{\tt ";" end}
 
-<while> : while <command>";" do <commands>";" end
+<while> : {\tt while} <command>{\tt ";" do} <commands>{\tt ";" end}
 
-<if> : if <command>";" do <commands>";" end\\
-\textcolor{white}{tab};if <command>";" do <commands>";" else do <commands>";" end
+<if> : {\tt if} <command>{\tt ";" do} <commands>{\tt ";" end}\\
+\textcolor{white}{tab};{\tt if} <command>{\tt ";" do} <commands>{\tt ";" else do} <commands>{\tt ";" end}
 
-<assign> : set STRING <value>
+<assign> : {\tt set} STRING <value>
 
 <command> : <simplecommand>\\
 \textcolor{white}{tab};NAMEDPIPE <simplecommand>\\
 \textcolor{white}{tab};MULTIPIPE <multicommand> PIPE <simplecommand>\\
 \textcolor{white}{tab};MULTIPIPE <multicommand>
 
-<values> : <value> <values> ;<value>
-
-<value> : STRING ;VARIABLE ;QUOTEDSTRING
-
 <simplecommand> : <values>
 ;PIPE <simplecommand>
     
 <multicommand> : <values>
+
+<values> : <value> <values> ;<value>
+
+<value> : STRING ;VARIABLE ;QUOTEDSTRING
+
 \end{grammar}
 
 \subsection{Simple Pipeline Syntax}
@@ -739,25 +755,10 @@ Figure \ref{forloop} shows an example using a {\tt for} loop.
 
 \begin{figure}[h]
 \begin{verbatim}
-3$ for x in 131.111.8.42 131.111.12.20 131.111.131.1; do ping $x -c 1; end
-PING 131.111.8.42 (131.111.8.42) 56(84) bytes of data.
-64 bytes from 131.111.8.42: icmp_seq=1 ttl=252 time=0.400 ms
-
---- 131.111.8.42 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time 0ms
-rtt min/avg/max/mdev = 0.400/0.400/0.400/0.000 ms
-PING 131.111.12.20 (131.111.12.20) 56(84) bytes of data.
-64 bytes from 131.111.12.20: icmp_seq=1 ttl=252 time=0.433 ms
-
---- 131.111.12.20 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time 0ms
-rtt min/avg/max/mdev = 0.433/0.433/0.433/0.000 ms
-PING 131.111.131.1 (131.111.131.1) 56(84) bytes of data.
-64 bytes from 131.111.131.1: icmp_seq=1 ttl=63 time=0.338 ms
-
---- 131.111.131.1 ping statistics ---
-1 packets transmitted, 1 received, 0% packet loss, time 0ms
-rtt min/avg/max/mdev = 0.338/0.338/0.338/0.000 ms
+1$ for x in 131.111.8.42 131.111.12.20 131.111.131.1; do host $x; end
+42.8.111.131.in-addr.arpa domain name pointer recdns0.csx.cam.ac.uk.
+20.12.111.131.in-addr.arpa domain name pointer recdns1.csx.cam.ac.uk.
+1.131.111.131.in-addr.arpa domain name pointer artemis.chu.cam.ac.uk.
 \end{verbatim}
 \caption{An example {\tt for} loop in Oosh, demonstrating variable
   assignment and unstructured data}
@@ -770,9 +771,10 @@ and can function without a server as a standalone shell. Basic command
 line interaction is provided by the {\tt cmd.Cmd} object in the
 standard Python library. This meant the shell supported basic user
 interaction and command history from very early on, allowing me to
-test the system as a whole. I was then able to add functionality and
-complexity iteratively, with the code largely functional at any given
-point in time.
+test new features within the shell rather than testing new functions
+in isolation. I was then able to add functionality and complexity
+iteratively, with sufficient independence between features that new
+features generally didn't stop previously developed code from working.
 
 The shell itself takes input from the user on a line-by-line
 basis. Each line is lexed, parsed and the resulting parse tree is
@@ -787,12 +789,13 @@ recursive descent tree evaluator.
 During development it quickly became clear that I needed to use the
 pipe functionality provided by the operating system to allow multiple
 processes to communicate in the standard shell manner. However this
-native pipe is not useful for Oosh pipes running over the network so I
-developed a {\tt PipePointer} abstraction that enables the evaluator
-to treat all Oosh pipes in the same fashion. The {\tt PipePointer} is
-an object that either encapsulates a native pipe address or the
-location of a remote process. In the case of remote data the {\tt
-  PipePointer} handles fetching the data and decoding it
+native pipe is an interface offered by the kernel on the local system
+and consequently cannot be used for pipes running over the network. To
+get round this I developed a {\tt PipePointer} abstraction that
+enables the evaluator to treat all Oosh pipes in the same fashion. The
+{\tt PipePointer} is an object that either encapsulates a native pipe
+address or the location of a remote process. In the case of remote
+data the {\tt PipePointer} handles fetching the data and decoding it
 appropriately. This was the central element of my `lazy data fetching'
 approach, enabling Oosh to only fetch the data from the remote system
 at the last moment.
@@ -802,17 +805,12 @@ at the last moment.
 
 The networking functionality was designed with two intentions: a concise,
 convenient syntax and efficient bandwidth usage. Today a user can use Bash and
-SSH to run commands remotely, but running successive commands on different
-systems is not convenient.
+SSH to run commands remotely, but the user must explicitly mark every
+command he wishes to run remotely.
 
 \begin{figure}[h]
 \begin{verbatim}
-home$ ssh wilfred@foo.com
-remote$ ps > /tmp/ps.txt
-remote$ exit
-Connection to remote.com closed.
-home$ scp wilfred@remote.com:/tmp/ps.txt .
-home$ grep root <ps.txt 
+home$ ssh wilfred@foo.com ps | grep root
 \end{verbatim}
 \caption{Collecting data on one remote system and performing analysis
   on a different remote system using Bash}
@@ -855,12 +853,11 @@ command to be run. The client will automatically initiate commands on the
 server and requests the resulting data as late as possible. This
 enables the server to use native pipes locally.
 
-The server supports the following commands: {\tt connect}, to
-authenticate a new user, {\tt disconnect}, to deauthenticate, {\tt
-  send}, to send the results of the last command back to the client,
-{\tt receive}, to send data to the server for it to use as {\tt stdin}
-for the next command, and {\tt command}, to execute a shell command on
-the server.
+The server supports the following commands: {\tt connect}, to log in,
+{\tt disconnect}, to log out, {\tt send}, to send the results of the
+last command back to the client, {\tt receive}, to send data to the
+server for it to use as {\tt stdin} for the next command, and {\tt
+  command}, to execute a shell command on the server.
 
 \subsection{The Client}
 The client initiates a connection on the Oosh port, 12345, then
@@ -869,23 +866,24 @@ to execute. The server runs these commands with the privileges of the
 user who started the server.
 
 Each command sent to the server corresponds to a new process to be run
-on the remote system (referred to as a simplecommand in the grammar),
-so if the user enters the command {\tt a@remote | b@remote | c@remote}
-this will become three separate messages to the server, {\tt command
-  a}, {\tt command b}, {\tt command c} with the establishment of the
-pipes between them being implicit. Therefore a loop (since loops are
-always evaluated by the client) where every simplecommand in the body
-is specified to be run remotely will result in every simplecommand
-producing a {\tt command} message to be sent to the server. This is
-not a performance problem if it is the case that the amount of data
-sent between processes vastly exceeds the length number of
-simplecommands that need sending.
+on the remote system (referred to as a $\langle$simplecommand$\rangle$
+in the grammar), so if the user enters the command {\tt a@remote |
+  b@remote | c@remote} this will become three separate messages to the
+server, {\tt command a}, {\tt command b}, {\tt command c} with the
+establishment of the pipes between them being implicit. Therefore a
+loop (since loops are always evaluated by the client) where every
+$\langle$simplecommand$\rangle$ in the body is specified to be run
+remotely will result in every $\langle$simplecommand$\rangle$ producing a {\tt command}
+message to be sent to the server. This is not a performance problem if
+it is the case that the amount of data sent between processes vastly
+exceeds the number of commands that need sending.
 
 Since the Oosh server only sends the results of computation back on
 demand, it enabled me to use a lazy data approach. Again if we
 consider {\tt a@remote | b@remote | c@remote}, only the result of the
 computation after {\tt c} has terminated will be sent back to the
-client. This optimisation is transparent to the user and does not
+client. This optimisation is transparent to the user (assuming the
+network is sufficiently low latency) and does not
 affect the results.
 
 A more interesting optimisation in Oosh is that of `command
@@ -902,9 +900,10 @@ complexity to the client/server interaction.
 
 This `command moving' optimisation assumes that bandwidth to the
 server is limited and the server has sufficient resources to run the
-additional commands. The typical usage of Bash with {\tt ssh} is
-that of running the remote server on a desktop or large server system
-so this assumption is probably valid.
+additional commands. A common usage of Bash with {\tt ssh} is that of
+running the remote server on a desktop or large server system (given
+that two of the largest server vendors, IBM and Cisco, ship servers
+with SSH daemons) so this assumption is probably valid.
 
 \begin{figure}
 \begin{verbatim}
@@ -934,6 +933,17 @@ the host. Also note that the output of {\tt oosh\_ls} is not sent
 immediately, the client explicitly requests it later on.
 
 \section{Command Selection}
+I needed to choose a selection of programs that would make a useful
+subset of basic command line functionality. I examined the selection
+of commands offered by BusyBox \cite{busybox}, as it aims to be a
+fairly minimal set of Unix commands required to make a system
+useful. Many commands were either interactive, set system settings or
+started daemons. None of these types of programs sent sufficient data
+to {\tt stdout} for them to benefit from my new structured data
+approach. Ultimately since my shell supported normal Unix commands, it
+was unnecessary for my replicate a lot of functionality that existing
+tools provide.
+
 In addition to the shell with its built-ins, I needed a selection of
 programs that understood the structured data and demonstrated its
 flexibility and versatility. Clearly with data in a tabular format, a
@@ -942,24 +952,14 @@ familiar to the user and broadly applicable. Another advantage
 of structured data is the ability to draw graphs, so an automatic
 graphing facility was created.
 
-I examined the selection of commands offered by BusyBox
-\cite{busybox}, as it aims to be a fairly minimal set of Unix commands
-required to make a system useful. Many commands were either
-interactive, set system settings or started daemons. None of these
-types of programs sent sufficient data to {\tt stdout} for them to
-benefit from my new structured data approach.
-
-There were three types of commands that I implemented. I implemented data
-sources, which write data to {\tt stdout} in the Oosh data format. I
-also implemented data manipulators, which perform a variety of
-database-like manipulations, inspired by the relational calculus. I
-also implemented a data analyser that would draw graphs based on input
-data given in the Oosh data format.
-
-I named all these commands using an {\tt oosh\_} prefix. This enabled me
-to reuse command names such as {\tt ls} without clashes. This
-prefix also acted as a hook to call an Oosh command rather than look
-for Unix commands in {\tt \$PATH}.
+There were three types of commands that I implemented. I implemented
+data sources, which write data to {\tt stdout} in the Oosh data
+format. I also implemented data manipulators, which perform a variety
+of database-like manipulations. By implementing a minimal subset of
+the relational calculus I was able to produce tools whose expressive
+power was relationally complete. I also implemented a data analyser
+that would draw graphs based on input data given in the Oosh data
+format.
 
 \subsubsection{Data Sources}
 I wrote {\tt oosh\_ls}, {\tt oosh\_echo} and {\tt oosh\_ps} based on their
@@ -1006,9 +1006,9 @@ My grapher, {\tt oosh\_graph}, simply requires the user to name the
 data series he wishes to plot and the type of graph he wants. {\tt
   oosh\_graph} then extracts the specified columns and passes them to
 a graphing library. This is not impossible in Bash, but Oosh enables a
-more elegant approach since the user can describe the data in a
-higher-order fashion. An example of the grapher in use can be seen in
-figure \ref{piegraph}
+more elegant approach since the user can describe the data in terms of
+data labels. An example of the grapher in use can be seen in figure
+\ref{piegraph}
 
 \begin{figure}[h]
   \centering
@@ -1021,22 +1021,29 @@ figure \ref{piegraph}
 \section{Backward Compatibility}
 
 Unix systems already have a very large number of command line
-tools. The PWF offers over 4000 commands to its users. Replacing all
+tools. The PWF offers over 4000 commands\footnotemark[3] to its users. Replacing all
 of these with Oosh equivalents would be intractable (within the
 timeframe of the project) and many applications would not benefit from
 the Oosh design approach. I therefore created the facility for any
 Unix command to be run from within Oosh.
 
+\footnotetext[3]{Calculated by pressing tab twice in an SSH session on
+  the PWF. This unlikely to be very accurate, since some commands
+  offer duplicate functionality and some programs (such as BusyBox)
+  provide multiple commands in one binary.}
+\stepcounter{footnote}
+
 I implemented this using a simple namespace style design. All Oosh
-commands start with the prefix {\tt oosh\_}. The Oosh shell recognises
-this prefix and searches in the Oosh directory rather than the
-directories listed in the {\tt \$PATH} variable. This namespace scheme
-permits interleaving of Oosh commands and other Unix commands. Since
-the Oosh data structure is line oriented, this interleaving ability is
-frequently useful. Commands such as {\tt grep} filter on a
-line-by-line basis, resulting in the Oosh data structure being
-preserved even when being operated on by non-Oosh line-oriented tools
-without modification.
+commands start with the prefix {\tt oosh\_}. This enabled me to reuse
+command names such as {\tt ls} without clashes. The Oosh shell
+recognises the {\tt oosh\_} prefix and searches in the Oosh directory
+rather than the directories listed in the {\tt \$PATH} variable. This
+namespace scheme permits interleaving of Oosh commands and other Unix
+commands. Since the Oosh data structure is line oriented, this
+interleaving ability is frequently useful. Commands such as {\tt grep}
+filter on a line-by-line basis, resulting in the Oosh data structure
+being preserved even when being operated on by non-Oosh line-oriented
+tools without modification.
 
 In figure \ref{grepexample} we see {\tt grep} being used without
 modification but still producing valid Oosh data structures so the
@@ -1050,16 +1057,17 @@ language for Oosh until I had a grammar, which required careful and
 subjective judgements.
 
 My language choice of Python proved to be a good decision, but was not
-without problems. I made the decision to use Python 3, which
-drastically limited the number of third-party libraries I could
-use. Since each command is spawned as a separate process I was able to
-use Python 2 where it was absolutely necessary by hard-coding these
-exceptions. This was not ideal since my resulting codebase became
-heterogeneous.
+without problems. Choosing the most recent version (Python 3) seemed
+to be logical but I was unaware that many Python libraries are not yet
+compatible with it, which drastically limited the number of
+third-party libraries I could use. Since each command is spawned as a
+separate process I was able to use Python 2 where it was absolutely
+necessary by hard-coding these exceptions. This was not ideal since my
+resulting codebase became heterogeneous.
 
 Python's documentation is generally good, but I did encounter bugs. I
 worked around these by examining the source of the libraries I was
-using (a luxury not always present in compiled languages).
+using and establishing the correct way to use them.
 
 Unix shells have been around for so long that they have acquired a lot
 of tradition and legacy behaviour. Some of these legacy traits caused
