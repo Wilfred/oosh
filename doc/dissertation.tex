@@ -3,6 +3,7 @@
 
 \usepackage{a4}
 \usepackage{verbatim}
+\usepackage{fancyvrb}
 
 % for pretty printing grammar in BNF
 \usepackage{bnf}
@@ -71,7 +72,7 @@ Name:               & \bf Wilfred Hughes                       \\
 College:            & \bf Churchill College                     \\
 Project Title:      & \bf Oosh: An Object Oriented Shell \\
 Examination:        & \bf Computer Science Part II, 2009-2010        \\
-Word Count:         & \bf 8300 \\
+Word Count:         & \bf 8700 \\
 Project Originator: & \bf Wilfred Hughes                    \\
 Supervisor:         & \bf David Eyers                    \\ 
 \end{tabular}
@@ -206,22 +207,22 @@ I evaluated several well-known shells available today. One of the most popular
 options is Bash, which is the default on most GNU/Linux distributions
 and Mac OS X (since version 10.3).
 
-A more recent alternative to Bash is the Friendly Interactive Shell (`Fish'),
-released in 2005. Fish is not a substantial departure from Bash, but breaks
-backwards compatibility. The design of Fish \cite{fishdesign} is motivated by a
-desire to create a minimal, orthogonal scripting language. While it achieves
-these goals it still requires the user to perform dumb manipulations on
-unstructured text.
+A more recent alternative to Bash is the Friendly Interactive Shell
+(`Fish'), released in 2005. Fish is not a substantial departure from
+Bash, but breaks backwards compatibility. The design of Fish
+\cite{fishdesign} is motivated by a desire to create a minimal,
+orthogonal scripting language. Whilst it achieves these goals it still
+requires the user to perform dumb manipulations on unstructured text.
 
 Another recent development is PowerShell, a Microsoft scripting
 language and shell released in 2006. PowerShell is a more radical
 departure from traditional shell design, offering an object-oriented
 approach. Whilst this offers an increase in expressive power, the
 PowerShell design does not seek to optimise the interface for
-interactive usage. PowerShell cmdlets use a more verbose noun-verb
-naming scheme (contrast {\tt ps} with {\tt Get-Process}) and the
-programmer is sometimes exposed to underlying Windows API for simple
-tasks such as basic networking.
+interactive usage. Commands within the PowerShell system (`cmdlets')
+use a more verbose noun-verb naming scheme (contrast {\tt ps} with
+{\tt Get-Process}) and the programmer is sometimes exposed to
+underlying Windows API for simple tasks such as basic networking.
 
 None of these existing solutions have support for transparent
 networking. Bash-like shells require the user to {\tt ssh} into the
@@ -242,13 +243,13 @@ include metadata that would be machine-readable. To demonstrate the
 versatility of this data structure I would create a number of programs
 that could produce and/or manipulate data in this format.
 
-Since networking is a much more prominent part of today's computer usage
-I concluded that my shell should include networking as a built-in
-rather than leaving it to an external program. This would require me
-to develop a simple client/server architecture. Since the shell itself
-would be aware of where commands were running, it would be able to use
-a intelligent data transfer scheme to minimise the bandwidth required
-to execute shell commands.
+Since networking is a much more prominent part of today's computer
+usage, I concluded that my shell should include networking as built-in
+functionality rather than leaving it to an external program. This
+would require me to develop a simple client/server architecture. Since
+the shell itself would be aware of where commands were running, it
+would be able to use an intelligent data transfer scheme to minimise
+the bandwidth required to execute shell commands.
 
 \cleardoublepage
 
@@ -273,26 +274,27 @@ intermediate results in a lightweight fashion.
 
 I also needed to develop a data structure that would enable my
 programs to process data in a manner that took advantage of the
-metadata present. With my desire to work with current programs and
+metadata present. Due to my desire to work with current programs and
 aiming to maintain useful shell metaphors, I needed to preserve the
-basic concept of a pipe as far as possible. This meant local
-commands needed to use the POSIX pipe primitive when pipes were
-local. Since I wished to support interleaving of my commands and other
-commands, I required a data structure that was transmitted as
+basic concept of a pipe as far as possible. This meant local commands
+needed to use the POSIX pipe primitive when pipes were local. Since I
+wished to support interleaving of my commands and other existing
+commands, I required a data structure that would be transmitted as
 structured text.
 
 With my data structure in place I needed a set of commands that would
-demonstrate the versatility of my design. This set needed to include commands
-that would produce structured data, commands that could manipulate this data and
-commands that would offer visualisations of this data.
+demonstrate the versatility of my design. This set needed to include
+commands that would produce structured data, commands that could
+manipulate this data and commands that would offer visualisations of
+this data.
 
 Finally, I wanted my shell to support a convenient network
 abstraction. I examined a number of currently available options. It is
 possible to mount a remote filespace with an `SSH filesystem', but
 this requires substantial setting up. PowerShell has some built-in
 networking but the facility is very general and so the syntax is
-undesirably complex. I concluded that Oosh should have a simple client/server
-architecture and a lightweight syntax to use it.
+undesirably complex. I concluded that Oosh should have a simple
+client/server architecture and a lightweight syntax to go with it.
 
 \section{Development Approach}
 Since my design aimed to build on traditional shell design, extending
@@ -301,7 +303,7 @@ most Unix shells are readily available under an open-source license. I
 investigated building on top of Bash or Fish, but both of these were
 substantial pieces of C code, much of which would require major
 changes to work with my intended features. For example, Fish uses a
-custom parser which is approximately 2000 lines of C code. There were
+custom parser which is approximately 2,000 lines of C code. There were
 no clear benefits for the additional effort. I concluded that
 starting afresh was my best option.
 
@@ -456,13 +458,13 @@ multipipe from saved pipes 1 and 2 he begins his command with {\tt
   |1+2}. An example of this syntax can be seen in figure \ref{multipipe}.
 
 \begin{figure}[h]
-\begin{verbatim}
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt] 
 4$ oosh_ps |1; sleep 1m; oosh_ps |2; |1+2 oosh_difference
 Command CPU % Memory % PID  User
 python3 0.0   0.3      6081 wilfred
 sh      0.0   0.0      6082 wilfred
 ps      0.0   0.0      6083 wilfred
-\end{verbatim}
+\end{Verbatim}
 \caption{An example of sequential commands, pipe saving and
   multipipes}
 \label{multipipe}
@@ -569,11 +571,11 @@ supporting this heterogeneity is crucial in order to ensure that every
 item in each row is printed in a manner consistent with the user's
 expectations.
 
-The algorithm I designed takes lines of Oosh output as input and finds
-the optimum layout. This has a time complexity of $O(C \log C + CL)$,
-where $L$ is the number of lines, and $C$ the number of columns. A
-thorough speed analysis and stress test in performed in section
-\ref{prettyspeed}.
+The algorithm I designed takes lines of Oosh conformant data as input
+and finds the optimum layout. This has a time complexity of $O(C \log
+C + CL)$, where $L$ is the number of lines, and $C$ the number of
+columns. A thorough speed analysis and stress test is performed in
+section \ref{prettyspeed}.
 
 The disadvantage of my design is that it requires that a command
 entered by the user must have finished being evaluated before the
@@ -597,7 +599,7 @@ Furthermore, if we consider the following data set:
 \end{verbatim}
 
 This would always print the name column very wide in Oosh, even if the last
-line is not visible on screen. A curses-interface would work better in
+line is not visible on screen. A curses interface would work better in
 this case as it would find the optimum display for that screenful
 rather than the global optimum.
 
@@ -666,7 +668,7 @@ emulated with pipe saving. Arithmetic operations may be performed
 using the Unix {\tt bc} command, which is arguably a more Unix style
 design (conforming to the ``do one thing and do it well'' design
 mantra). The remaining omissions are more difficult to work around but
-fall outside of the usage being targeted by Oosh.
+fall outside of the usage targeted by Oosh.
 
 \subsection{Formal Language Specification}
 I list below the language that the parser accepts. Non-terminals are
@@ -721,8 +723,9 @@ similar that many simple shell invocations will work without modification in
 Oosh. Figure \ref{lsexample} gives an example of this feature in use.
 
 \begin{figure}[h]
-\begin{verbatim}
-1$ oosh_ls /usr/bin | oosh_project Filename Size | oosh_sort Size | tail
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt]
+1$ oosh_ls /usr/bin | oosh_project Filename Size | oosh_sort Size
+ | tail
 Filename Size
 mencoder 10984340
 inkview  11074508
@@ -732,7 +735,7 @@ bibtexu  17312116
 xetex    17799216
 xelatex  17799216
 skype    18567888
-\end{verbatim}
+\end{Verbatim}
   \caption{A simple pipeline showing contextual data
     manipulation. Note that {\tt tail} is a part of the GNU coreutils
     package and is working in Oosh without modification.}
@@ -754,12 +757,11 @@ Oosh syntax is very similar to Fish here.
 Figure \ref{forloop} shows an example using a {\tt for} loop.
 
 \begin{figure}[h]
-\begin{verbatim}
-1$ for x in 131.111.8.42 131.111.12.20 131.111.131.1; do host $x; end
-42.8.111.131.in-addr.arpa domain name pointer recdns0.csx.cam.ac.uk.
-20.12.111.131.in-addr.arpa domain name pointer recdns1.csx.cam.ac.uk.
-1.131.111.131.in-addr.arpa domain name pointer artemis.chu.cam.ac.uk.
-\end{verbatim}
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt]
+1$ for x in 192.33.4.12 128.8.10.90; do host $x; end
+12.4.33.192.in-addr.arpa domain name pointer c.root-servers.net.
+90.10.8.128.in-addr.arpa domain name pointer d.root-servers.net.
+\end{Verbatim}
 \caption{An example {\tt for} loop in Oosh, demonstrating variable
   assignment and unstructured data}
 \label{forloop}
@@ -780,7 +782,7 @@ The shell itself takes input from the user on a line-by-line
 basis. Each line is lexed, parsed and the resulting parse tree is
 evaluated. For this job I took advantage of PLY (Python Lex-Yacc),
 which is a reimplementation of Lex and Yacc in Python but offers more
-helpful error messages. Once the syntax of language was finalised
+helpful error messages. Once the syntax of language was finalised,
 using the library was a simple matter of writing regular expressions
 for lexing and converting my grammar specification to a format that
 Yacc accepted. Evaluation of an expression is then a relatively simple
@@ -809,19 +811,19 @@ SSH to run commands remotely, but the user must explicitly mark every
 command he wishes to run remotely.
 
 \begin{figure}[h]
-\begin{verbatim}
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt]
 home$ ssh wilfred@foo.com ps | grep root
-\end{verbatim}
+\end{Verbatim}
 \caption{Collecting data on one remote system and performing analysis
   on a different remote system using Bash}
 \label{sshremote}
 \end{figure}
 
 \begin{figure}[h]
-\begin{verbatim}
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt]
 $ connect@remote.com wilfred password
 $ ps@remote.com | grep@localhost root
-\end{verbatim}
+\end{Verbatim}
 \caption{Collecting data on one remote system and performing analysis
   on a different remote system using Oosh}
 \end{figure}
@@ -873,17 +875,18 @@ server, {\tt command a}, {\tt command b}, {\tt command c} with the
 establishment of the pipes between them being implicit. Therefore a
 loop (since loops are always evaluated by the client) where every
 $\langle$simplecommand$\rangle$ in the body is specified to be run
-remotely will result in every $\langle$simplecommand$\rangle$ producing a {\tt command}
-message to be sent to the server. This is not a performance problem if
-it is the case that the amount of data sent between processes vastly
-exceeds the number of commands that need sending.
+remotely will result in every $\langle$simplecommand$\rangle$
+producing a {\tt command} message to be sent to the server. This is
+not a performance problem if it is the case that the amount of data
+sent between processes vastly exceeds the number of commands that need
+sending.
 
 Since the Oosh server only sends the results of computation back on
 demand, it enabled me to use a lazy data approach. Again if we
 consider {\tt a@remote | b@remote | c@remote}, only the result of the
 computation after {\tt c} has terminated will be sent back to the
 client. This optimisation is transparent to the user (assuming the
-network is sufficiently low latency) and does not
+network has sufficiently low latency) and does not
 affect the results.
 
 A more interesting optimisation in Oosh is that of `command
@@ -898,15 +901,15 @@ will respect that. The actual logic to decide whether or not to move
 the command is within the client, so this added no additional
 complexity to the client/server interaction.
 
-This `command moving' optimisation assumes that bandwidth to the
+This `command moving' optimisation assumes that the bandwidth to the
 server is limited and the server has sufficient resources to run the
 additional commands. A common usage of Bash with {\tt ssh} is that of
-running the remote server on a desktop or large server system (given
+running the remote server on a desktop or on a large server system (given
 that two of the largest server vendors, IBM and Cisco, ship servers
 with SSH daemons) so this assumption is probably valid.
 
 \begin{figure}
-\begin{verbatim}
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt]
 Client:
 2$ connect@193.60.95.74 wilfred mypassword;
      oosh_ls@193.60.95.74 /home/wilfred/logs | grep kde
@@ -916,12 +919,14 @@ freenode_#kde.log      wilfred 53318
 
 Server:
 $ ./ooshserver.py
-Starting server at soup.linux.pwf.cam.ac.uk (193.60.95.74) on port 12345
+Starting server at soup.linux.pwf.cam.ac.uk (193.60.95.74) on port
+ 12345
 request is [`connect', `wilfred', `mypassword']
-request is [`command', `python3', `oosh_ls.py', `/home/wilfred/logs']
+request is [`command', `python3', `oosh_ls.py',
+ `/home/wilfred/logs']
 request is [`command', `grep', `kde']
 request is [`send']
-\end{verbatim}
+\end{Verbatim}
   \caption{Example of commands being run over a network with command
     moving. Note that {\tt grep} has not had its location specified
     and so runs remotely.}
@@ -1012,7 +1017,9 @@ data labels. An example of the grapher in use can be seen in figure
 
 \begin{figure}[h]
   \centering
-  \includegraphics[scale=0.4]{cpu_consumption.png}
+  \setlength\fboxsep{0.5pt}
+  \setlength\fboxrule{0.5pt}
+  \fbox{\includegraphics[scale=0.4]{cpu_consumption.png}}
   \caption{A pie chart generated with {\tt oosh\_ps | oosh\_graph pie
       Command `CPU \%' cpu\_consumption.svg}}
   \label{piegraph}
@@ -1021,11 +1028,12 @@ data labels. An example of the grapher in use can be seen in figure
 \section{Backward Compatibility}
 
 Unix systems already have a very large number of command line
-tools. The PWF offers over 4000 commands\footnotemark[3] to its users. Replacing all
-of these with Oosh equivalents would be intractable (within the
-timeframe of the project) and many applications would not benefit from
-the Oosh design approach. I therefore created the facility for any
-Unix command to be run from within Oosh.
+tools. The PWF offers over 4000 commands\footnotemark[3] to its
+users. Replacing all of these with Oosh equivalents would be
+intractable (within the timeframe of the project) and many
+applications would not benefit from the Oosh design approach. I
+therefore created the facility for any Unix command to be run from
+within Oosh.
 
 \footnotetext[3]{Calculated by pressing tab twice in an SSH session on
   the PWF. This unlikely to be very accurate, since some commands
@@ -1071,11 +1079,11 @@ using and establishing the correct way to use them.
 
 Unix shells have been around for so long that they have acquired a lot
 of tradition and legacy behaviour. Some of these legacy traits caused
-problems for me, particularly escape codes. Today's shells still
-support escape codes for obsolete behaviour such as ringing the system
-bell. These characters caused crashes in bugs, but could not be
-printed to the string, so presented an unusual challenge for finding
-the bug.
+problems for me, particularly escape codes. Today's shells support a
+wide range escape codes which are not used by Oosh. Sadly as they are
+non-printable characters they presented an interesting challenge for
+debugging. Certain escape character crashed Oosh but could not be
+printed the console for me to examine.
 
 The other limitation I encountered was Python's handling of signals,
 which is limited. Spawning subprocesses requires the ability to emit
@@ -1103,9 +1111,18 @@ system resource consumption and latency from the user's perspective.
 
 \section{Command Length}
 \label{commandlength}
-Since Oosh offers a higher level view of data, it should produce more concise
-commands that are also easier to read. Defining a typical workload is extremely
-difficult so instead I consider the best case scenarios.
+Since Oosh uses structured data with inline metadata, it should
+produce more concise commands, since no intermediate data formatting
+is necessary to use the output of one tool as the input for
+another. The labelling of data offered by Oosh data format allows us
+to refer to column names. This should enable the user to write scripts
+that are easier to read. 
+
+I conducted a series of tests that compared the length of Oosh
+commands and their Bash equivalents. Defining a typical set of
+commands is extremely difficult so instead I considered a set of
+commands in which the advantages of Oosh should be particularly
+apparent.
 
 I compare Oosh commands with Bash commands by length. In addition to
 simple character count I compare the Halstead length \cite{halstead}
@@ -1150,11 +1167,11 @@ corresponds to a modest decrease in complexity for the user.
 \hline
 Command sequence & Characters & Halstead \\
 \hline
-{\tt ps aux | tail -n +2 | sort -k 3,3 | \textbackslash} & 76 & 25\\
-{\tt sed `s/ \textbackslash+/ /g' | cut -d " " -f 1,3,11-} & & \\
+{\tt ps aux | tail -n +2 | sort -k 3,3 | \textbackslash} & 70 & 25\\
+{\tt tr -s ` ' | cut -d " " -f 1,3,11-} & & \\
 \hline
-{\tt oosh\_ps | oosh\_sort `CPU\%' | oosh\_project User Command `CPU \%'} & 64 &
-9 \\
+{\tt oosh\_ps | oosh\_sort `CPU\%' |} & 64 & 9 \\
+{\tt \, oosh\_project User Command `CPU \%'} & & \\
 \hline
 \end{tabular}
 \caption{Comparing data filtering between Bash and Oosh}
@@ -1167,13 +1184,14 @@ example also slightly favours {\tt oosh\_ps} since we have to pass an
 argument to {\tt ps} to achieve the same output, but even discounting
 for this the Bash command is substantially more complex.
 
-The Bash example works as follows: list all processes running, remove the
-header, sort on column 3, convert all whitespace blocks to single spaces then
-finally cut out columns 1, 3 and 11 onwards. Since the header is just another
-line of text to {\tt sort}, we must remove it whilst {\tt oosh\_sort} does not
-require this input massaging. {\tt cut} is used to only split the line based on
-spacing, so we must use {\tt sed} to ensure spacing is uniform. Even though {\tt
-  ps} does primitive formatting, we are forced to remove it.
+The Bash example works as follows: list all processes running, remove
+the header, sort on column 3, convert all whitespace blocks to single
+spaces then finally cut out columns 1, 3 and 11 onwards. Since the
+header is just another line of text to {\tt sort}, we must remove it
+whilst {\tt oosh\_sort} does not require this input massaging. {\tt
+  cut} is used to only split the line based on spacing, so we must use
+{\tt tr} to ensure spacing is uniform. Even though {\tt ps} does
+primitive formatting, we are forced to remove it.
 
 The metrics here do not capture another simplification offered by Oosh's high
 level data view. The Oosh example enables the user to refer to column by name
@@ -1243,9 +1261,11 @@ without command moving. This enabled me to examine both the number of
 packets and total amount of data transmitted in each test.
 
 \begin{figure}[h]
-\centering
-\includegraphics[scale=0.5]{network_graph.png}
-\caption{Contrasting bandwidth usage between Bash with SSH and Oosh,
+  \centering
+  \setlength\fboxsep{0.5pt}
+  \setlength\fboxrule{0.5pt}
+  \fbox{\includegraphics[scale=0.5]{network_graph.png}}
+  \caption{Contrasting bandwidth usage between Bash with SSH and Oosh,
   and measure the effect of command moving}
 \label{networkgraph}
 \end{figure}
@@ -1276,13 +1296,14 @@ because a single TCP connection supports duplex communication. Much of
 the Oosh bandwidth is therefore wasted on TCP setup and teardown. The
 1403 bytes consisted of 20 packets, much larger than SSH which only
 used 4. Consequently the average packet size during Oosh cleanup was
-only 70 bytes. Since an empty TCP packet is 66 bytes, clearly most of 1403
-bytes is superfluous.
+only 70 bytes. Since an empty TCP packet is 66 bytes, clearly most of
+the 1403 bytes are superfluous.
 
 Other optimisations become visible here as well. Oosh server commands
-are sent as strings, and verbose error results are sent back as
-strings, even on successful execution. The Oosh protocol is too chatty and a
-shorter encoding for commands would also improve efficiency.
+are sent as strings, and verbose messages reporting errors or lack
+thereof are sent back as strings, even though successful execution
+tends to be the most common outcome. The Oosh protocol is too chatty
+and a shorter encoding for commands would also improve efficiency.
 
 % bash with ssh:
 % 24 packets 5005 authentication
@@ -1315,15 +1336,17 @@ overhead of using Oosh instead of standard tools.
 My first test compared running {\tt oosh\_ls} with {\tt ls} 6.12 from
 GNU coreutils on a collection of directories with contents of varying
 size. I generated these directories using the Bash command {\tt for x
-  in {1..n} do echo -n ``'' >\$x.txt; done} to ensure that all the
+  in \{1..n\}; do echo -n ``'' >\$x.txt; done} to ensure that all the
 files were identical. Figure \ref{lsspeed} shows the performance
 difference between the two.
 
 \begin{figure}[h]
-\centering
-\includegraphics[scale=0.5]{ls_graph.png}
-\caption{Contrasting performance between {\tt ls} from GNU Coreutils
-  and {\tt oosh\_ls}}
+  \centering
+  \setlength\fboxsep{0.5pt}
+  \setlength\fboxrule{0.5pt}
+  \fbox{\includegraphics[scale=0.5]{ls_graph.png}}
+  \caption{Contrasting performance between {\tt ls} from GNU Coreutils
+    and {\tt oosh\_ls}}
 \label{lsspeed}
 \end{figure}
 
@@ -1332,19 +1355,18 @@ when using Oosh for large datasets. At the lower end, Oosh has a
 startup time of approximately 0.02 seconds which can be attributed to
 the startup time of the Python interpreter. This difference is below
 the level of human perception, although pathological cases probably
-exist, such as an Oosh script with many short lived processes. A human
-being cannot perceive delays of less than 0.1 seconds  \cite{hci}
-so this delay is acceptable. Both {\tt ls} and {\tt oosh\_ls} can be
-seen to be scaling linearly with respect to the number of files.
+exist, such as an Oosh script with many short lived processes. Humans
+cannot perceive delays of less than 0.1 seconds \cite{hci} so this
+delay is acceptable. Both {\tt ls} and {\tt oosh\_ls} can be seen to
+be scaling linearly with respect to the number of files.
 
-Testing {\tt oosh\_ls} scaling allowed me to analyse the costs
-introduced by produced by my data structure. If we consider a sample
-piece of output from {\tt oosh\_ls} being run on the root directory,
-we obtain figure \ref{lsroot}.
-% fixme: producing wrong cross-references
+Testing the scaling of {\tt oosh\_ls} allowed me to analyse the costs
+produced by my data structure. If we consider a sample piece of output
+from {\tt oosh\_ls} being run on the root directory, we obtain figure
+\ref{lsroot}.
 
-\begin{figure}
-\begin{verbatim}
+\begin{figure}[h]
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt] 
 {`Owner': `root', `Size': 4096, `Filename': `root'}
 {`Owner': `root', `Size': 4096, `Filename': `media'}
 {`Owner': `root', `Size': 0, `Filename': `.servers'}
@@ -1369,7 +1391,7 @@ we obtain figure \ref{lsroot}.
 {`Owner': `root', `Size': 4096, `Filename': `mnt'}
 {`Owner': `root', `Size': 16384, `Filename': `lost+found'}
 {`Owner': `root', `Size': 12288, `Filename': `home'}
-\end{verbatim}
+\end{Verbatim}
 \caption{Output of {\tt oosh\_ls /} without pretty printing}
 \label{lsroot}
 \end{figure}
@@ -1387,46 +1409,49 @@ unlikely to be a useful optimisation.
 \subsection{Latencies Introduced by Pretty Printing}
 \label{prettyspeed}
 As discussed in section \ref{prettyimpl}, my pretty printing algorithm
-is $O(C \log C + CL)$ in time, where $C$ is the number of columns and
-$L$ the number of lines. Under the assumption that a typical workload
-will have vastly more lines than columns in the output, I measured
-the additional time taken for output to be shown to the user if my
-pretty print algorithm is used.
+has complexity $O(C \log C + CL)$ in time, where $C$ is the number of
+columns and $L$ the number of lines. Under the assumption that a
+typical workload will have vastly more lines than columns in the
+output, I measured the additional time taken for output to be shown to
+the user if my pretty print algorithm is used.
 
 \begin{figure}[h]
-\centering
-\includegraphics[scale=0.5]{print_graph.png}
-\caption{Added latency due to running the pretty printing algorithm on
-  Oosh output}
+  \centering
+  \setlength\fboxsep{0.5pt}
+  \setlength\fboxrule{0.5pt}
+  \fbox{\includegraphics[scale=0.5]{print_graph.png}}
+  \caption{Added latency due to running the pretty printing algorithm on
+    Oosh output}
 \end{figure}
 
 This graph was produced using the same set of directories as in the
 previous benchmark, and similarly using {\tt oosh\_ls}. I then
-compared time for the command to terminate when with and without
-pretty printing.
+compared the time for the command to terminate with and without pretty
+printing.
 
 This graph conceals the fact that the pretty print algorithm requires
 the full input before producing any output, whereas the simplistic
-Bash-style approach of writing output asynchronously reduces the
-perceived latency. The algorithm performs as expected, scaling roughly
-linearly as the number of lines increases. Since printing 1000 lines
-introduces only 33 milliseconds of delay (on top of the 93
-milliseconds required by the rest of the command execution), the
-performance of Oosh's pretty print is completely acceptable for small
-or medium sized quantities of data.
+Bash-style approach of writing output asynchronously induces no
+latency. The algorithm performs as expected, scaling roughly linearly
+as the number of lines increases. Since printing 1000 lines introduces
+only 33 milliseconds of delay (on top of the 93 milliseconds required
+by the rest of the command execution), the performance of Oosh's
+pretty print is completely acceptable for small or medium sized
+quantities of data.
 
 \subsection{Other Measures}
 \label{othermeasures}
 
 I also performed a few simpler measures of resource
-utilisation. Whilst performing my benchmarks on the most recent build
-of Oosh, I used the Linux resource monitor to measure peak system
-usage. Memory usage peaked at 43MiB, and CPU usage at 40\%. By
-contrast, Bash did not exceed 2MiB of memory and 5\% CPU. The memory
-consumption is acceptable on a modern systems which tend to have at
-least 2GiB of memory. However CPU usage is rather high and since many
-experienced shell users often have a number of shells open at once,
-this may become a problem.
+utilisation. Whilst performing the pretty print benchmarks on the most
+recent build of Oosh, I used the Linux resource monitor to measure
+peak system usage. Memory usage peaked at 43 MiB, and CPU usage at 40\%
+(on an Athlon 64 X2 6000 clocked at 3 GHz). By contrast, Bash did not
+exceed 2 MiB of memory and 5\% CPU. The memory consumption is
+acceptable on modern systems which tend to have at least 2 GiB of
+memory. However CPU usage is rather high and since many experienced
+shell users often have a number of shells open at once, this may
+become a problem.
 
 % what was evaluated?
 % what were the results?
@@ -1471,13 +1496,12 @@ networking programs (such as changing between {\tt ssh} and {\tt
   telnet}).
 
 Ultimately very complex shell scripts are frequently rewritten as
-standalone application. Using {\tt ls} and {\tt ps} data to draw
+standalone applications. Using {\tt ls} and {\tt ps} data to draw
 graphs is unnecessary on a Linux system, where this is such a common
 task that a number of GUI applications are available to perform this
 role. Consequently it is difficult to find many limitations of current
 shells that a savvy user could not work around.
 
-%todo: finish
 Finally, Oosh is missing too many convenience features offered by
 competing shells. The language it accepts is too minimalistic, with
 the informally specified semantics giving too little thought to
@@ -1494,9 +1518,9 @@ widely used but were outside the scope of Oosh. However to use Oosh as
 your primary shell would be very inconvenient without these.
 
 One obvious enhancement would be pervasive use of the Oosh data
-structure. There are a number of areas that would benefit from this,
-one good example being the {\tt /sys} directory which holds kernel
-generated hardware information. The precise format of the data
+structure. There are a number of areas that would benefit from this.
+One good example of this is the {\tt /sys} directory which holds
+kernel generated hardware information. The precise format of the data
 structure when printed as text is only convenient if the programmer
 wishes to incorporate the Python interpreter into his
 program. Therefore an XML based data structure would aid
@@ -1577,6 +1601,6 @@ workloads may well benefit from some careful optimisation.
 % use same formatting as proposal had in header
 \parindent 0pt
 \parskip 6pt
-%\include{proposal_include}
+\include{proposal_include}
 
 \end{document}
