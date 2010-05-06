@@ -1146,8 +1146,8 @@ conceptually simpler commands that happen to have longer names or arguments.
 \hline
 Command sequence & Characters & Halstead \\
 \hline
-{\tt ls /bin \textgreater /tmp/bin1.txt} & 96 & 14 \\
-{\tt ls /usr/bin \textgreater /tmp/bin2.txt} & & \\
+{\tt ls /bin >/tmp/bin1.txt} & 96 & 14 \\
+{\tt ls /usr/bin >/tmp/bin2.txt} & & \\
 {\tt cat /tmp/bin1.txt /tmp/bin2.txt \textbar \, grep python} & & \\
 
 \hline
@@ -1161,13 +1161,24 @@ Command sequence & Characters & Halstead \\
 \label{pipesave}
 \end{figure}
 
-In the example shown in figure \ref{pipesave} Oosh produces a
+In the example shown in figure \ref{pipesave}, Oosh produces a
 character saving despite command names being longer. The Halstead
 length is almost unchanged, so Oosh is not producing a substantial
 difference in command simplicity for the user. The pipe
 redirection in Bash requires the user to choose a name for temporary
 data, an unnecessary overhead. The character count reduction therefore
 corresponds to a modest decrease in complexity for the user.
+
+The Bash example gives the closest analogue of the Oosh command. A
+number of alternatives are possible. One popular feature of Bash is
+regular expression support, so a Bash user may write the last line as
+{\tt cat /tmp/bin[12].txt | grep python}, but this decreases the
+character count at the expense of increasing the Halstead length. Bash
+also supports named pipes, so the whole command may be simplified to
+{\tt cat <(ls /bin) <(ls /usr/bin) | grep python}. This is both
+shorter and simpler but does not give precisely the same outcome, as
+we cannot reuse the results from {\tt ls /bin} or {\tt ls /usr/bin}
+unlike the Oosh version which saves these results.
 
 \begin{figure}[h]
 \begin{tabular}{|l|l|l|}
@@ -1184,14 +1195,16 @@ Command sequence & Characters & Halstead \\
 \hline
 \end{tabular}
 \caption{Comparing data filtering between Bash and Oosh}
+\label{bashps}
 \end{figure}
 
-This example, which uses filtering based on tabular data, benefits
-hugely from the Oosh design. The Oosh example uses slightly fewer
-characters but its Halstead length is dramatically shorter. This
-example also slightly favours {\tt oosh\_ps} since we have to pass an
-argument to {\tt ps} to achieve the same output, but even discounting
-for this the Bash command is substantially more complex.
+The example in figure \ref{bashps}, which uses filtering based on
+tabular data, benefits hugely from the Oosh design. The Oosh example
+uses slightly fewer characters but its Halstead length is dramatically
+shorter. This example also slightly favours {\tt oosh\_ps} since we
+have to pass an argument to {\tt ps} to achieve the same output, but
+even discounting for this the Bash command is substantially more
+complex.
 
 The Bash example works as follows: list all processes running, remove
 the header, sort on column 3, convert all whitespace blocks to single
@@ -1201,6 +1214,22 @@ whilst {\tt oosh\_sort} does not require this input massaging. {\tt
   cut} is used to only split the line based on spacing, so we must use
 {\tt tr} to ensure spacing is uniform. Even though {\tt ps} does
 primitive formatting, we are forced to remove it.
+
+An experienced Bash user might be tempted to use {\tt sed} and {\tt
+awk} to solve this problem, which are scripting languages in their own
+right. However, we cannot distinguish between spaces that denote
+column separation and commands which include spaces (such as `{\tt
+uname -a}'). This forces us to use a loop in {\tt awk}. The resulting
+command is therefore:
+
+\begin{verbatim}
+ps aux | sed 1d | sort -k 3,3 |
+  awk `{printf("%s %s ",$1,$3);for(i=11;i<=NF;i++) 
+    printf("%s ",$i);printf("\n")}'
+\end{verbatim}
+
+\noindent
+which is both longer and more complex.
 
 The metrics here do not capture another simplification offered by Oosh's high
 level data view. The Oosh example enables the user to refer to column by name
@@ -1215,7 +1244,9 @@ this.
 
 To measure the effectiveness of my networking design choices, I
 compared the following Oosh command with its equivalent using Bash and
-SSH:
+SSH. Whilst SSH is a substantially more complex piece of software, it
+is the most popular remote shell utility \cite{ssh} and so acts as the major
+`competitor' to Oosh.
 
 \subsubsection{Bash Session}
 \begin{verbatim}
@@ -1251,13 +1282,11 @@ wilfred@127.0.0.1's password:
 \end{verbatim}
 
 \subsection{Design Differences}
-Oosh only requires the user to authenticate once with each remote
-system and then he is able to run commands without further
-effort. Since we are running {\tt ssh} at the granularity of commands,
-we are forced to reauthenticate each time. The user may set public-key
-authentication such that he does not need to type in his password
-every time however the handshake always occurs. The other distinction
-of the Oosh approach is that the user must explicitly log out.
+
+The Oosh client/server protocol is simple, sending messages as text
+between the client and the server. SSH is more complex, sending most
+data in a binary format. SSH also ensure authenticity of the server to
+prevent man-in-the-middle attacks.
 
 SSH encrypts all traffic, increasing CPU consumption although not
 meaningfully changing bandwidth consumption. Oosh sends data in
@@ -1282,9 +1311,10 @@ packets and total amount of data transmitted in each test.
 Figure \ref{networkgraph} gives a side-by-side comparison of total
 data sent for each of the three tests. The Bash with SSH test
 demonstrates the additional complexity of the SSH authentication
-protocol. This would be exacerbated if the user was performing a
-series of commands over SSH, as the authentication would be repeated
-each time.
+protocol. This would be exacerbated if the user was interacting with a
+larger number of servers. However this is a one-off cost and more
+substantial commands running remotely would ensure the data returned
+would be much larger than the authentication.
 
 In the Oosh tests shown on the graph, there is noticeably less traffic
 at the authentication stage due to the simpler protocol. Using the
@@ -1297,16 +1327,16 @@ modest bandwidth saving so savings are highly dependent on usage.
 
 There is also a marked contrast between the 264 bytes required to
 close the connection with SSH and the 1403 bytes required by
-Oosh. This is partly due to Oosh requiring an explicit disconnection,
-but examining the traffic logs shows that Oosh initiates too many TCP
-sessions. When the client initiates a session to the server the server
-also starts a separate session to the client. This is clearly wasteful
-because a single TCP connection supports duplex communication. Much of
-the Oosh bandwidth is therefore wasted on TCP setup and teardown. The
-1403 bytes consisted of 20 packets, much larger than SSH which only
-used 4. Consequently the average packet size during Oosh cleanup was
-only 70 bytes. Since an empty TCP packet is 66 bytes, clearly most of
-the 1403 bytes are superfluous.
+Oosh. This is partly due to Oosh requiring an explicit disconnection
+message, but examining the traffic logs shows that Oosh initiates too
+many TCP sessions. When the client initiates a session to the server
+the server also starts a separate session to the client. This is
+clearly wasteful because a single TCP connection supports duplex
+communication. Much of the Oosh bandwidth is therefore wasted on TCP
+setup and teardown. The 1403 bytes consisted of 20 packets, much
+larger than SSH which only used 4. Consequently the average packet
+size during Oosh cleanup was only 70 bytes. Since an empty TCP packet
+is 66 bytes, clearly most of the 1403 bytes are superfluous.
 
 Other optimisations become visible here as well. Oosh server commands
 are sent as strings, and verbose messages reporting errors or lack
@@ -1332,10 +1362,6 @@ and a shorter encoding for commands would also improve efficiency.
 % 10 packets 698 bytes sending 2nd command
 % 10 packets 752 bytes sending data back
 % 20 packets 1403 cleanup
-
-
-% Oosh is noisy, excessive number of TCP sessions (exposed for short
-% commands), too chatty acknowledgements of error presence or lack thereof
 
 \section{Oosh Overheads}
 I also conducted a series of benchmarks that measure the performance
@@ -1429,7 +1455,7 @@ the user if my pretty print algorithm is used.
 
 \begin{figure}[h]
   \centering
-  \setlength\fboxsep{0.5pt}
+  \setlength\fboxsep{2pt}
   \setlength\fboxrule{0.5pt}
   \fbox{\includegraphics[scale=0.5]{print_graph.png}}
   \caption{Added latency due to running the pretty printing algorithm on
@@ -1558,7 +1584,7 @@ workloads may well benefit from some careful optimisation.
 % the bibliography
 
 \addcontentsline{toc}{chapter}{Bibliography}
-\begin{thebibliography}{8} % at most 8 citations
+\begin{thebibliography}{9} % at most 9 citations
 
 \bibitem{multics}
   Louis Pouzin
@@ -1599,6 +1625,12 @@ workloads may well benefit from some careful optimisation.
   Halstead, Maurice H.\ 
   \emph{Elements of Software Science}
   Elsevier North-Holland, New York
+
+\bibitem{ssh}
+  Nicholas Rosasco and David Larochelle
+  \emph{How and Why More Secure Technologies Succeed in Legacy
+  Markets: Lessons from the Success of SSH}
+  Department of Computer Science, University of Virginia   
 
 \end{thebibliography}
 \cleardoublepage
