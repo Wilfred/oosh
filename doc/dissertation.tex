@@ -14,6 +14,9 @@
 % for rows spanning multiple columns in tables
 \usepackage{multirow}
 
+% for fixing bibliography and convenience links in the pdf
+\usepackage{hyperref}
+
 \input{epsf}                            % to allow postscript inclusions
 % On thor and CUS read top of file:
 %     /opt/TeX/lib/texmf/tex/dvips/epsf.sty
@@ -72,7 +75,7 @@ Name:               & \bf Wilfred Hughes                       \\
 College:            & \bf Churchill College                     \\
 Project Title:      & \bf Oosh: An Object Oriented Shell \\
 Examination:        & \bf Computer Science Part II, 2009-2010        \\
-Word Count:         & \bf 8800 \\
+Word Count:         & \bf 8900 \\
 Project Originator: & \bf Wilfred Hughes                    \\
 Supervisor:         & \bf David Eyers                    \\ 
 \end{tabular}
@@ -461,7 +464,7 @@ multipipe from saved pipes 1 and 2 he begins his command with {\tt
   |1+2}. An example of this syntax can be seen in figure \ref{multipipe}.
 
 \begin{figure}[h]
-\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt] 
+\begin{Verbatim}[frame=single,framerule=0.2pt,framesep=5pt]
 4$ oosh_ps |1; sleep 1m; oosh_ps |2; |1+2 oosh_difference
 Command CPU % Memory % PID  User
 python3 0.0   0.3      6081 wilfred
@@ -1512,43 +1515,24 @@ become a problem.
 % future prospects
 
 \section{Overall Conclusions}
-Characterising typical shell usage is difficult. Developing Oosh
-demonstrated that it is possible to produce a more powerful shell
-metaphor provided that you only consider a limited subset of shell
-functionality. 
 
-The number of typical commands that input or output sufficient data to
-benefit from the Oosh design is fairly small. Many common tasks, such
-as spawning processes ({\tt /etc/init.d/apache start}), using
-interactive commands ({\tt mutt}) and hardware configuration ({\tt
-  ifconfig}) would not benefit from either the networking features or
-the structured data format found in Oosh.
+Developing Oosh demonstrated that it is possible to produce a more
+effective shell metaphor provided that you only consider a limited
+subset of shell functionality. The final product supports much of
+standard Unix shell functionality plus a number of novel features. 
 
-The networking functionality is excellent if you want to run pipes
-over multiple systems, but if you just want to run commands on a
-different system then the Oosh design is overly complex. The
-networking functionality is also more brittle as it is a part of the
-Oosh shell. This contrasts with the traditional Unix separation of
-responsibilities, which enables the user to choose between multiple
-networking programs (such as changing between {\tt ssh} and {\tt
-  telnet}).
+My structured data approach produced tangible benefits and making
+networking part of the shell's built-ins produced new scope for
+optimisations. Oosh is capable of dynamically determining whether it
+is safe to move commands and transparently performing the move.
 
-Ultimately very complex shell scripts are frequently rewritten as
-standalone applications. Using {\tt ls} and {\tt ps} data to draw
-graphs is unnecessary on a Linux system, where this is such a common
-task that a number of GUI applications are available to perform this
-role. Consequently it is difficult to find many limitations of current
-shells that a savvy user could not work around.
+My graphing tools and data analysers offered particular clear benefits
+from using structured data, and I would like to see these capabilities
+incorporated into mainstream shells in the future.
 
-Finally, Oosh is lacks many convenience features offered by competing
-shells. The language it accepts is too minimalistic, with the
-informally specified semantics giving too little thought to errors,
-particularly with network interaction. To make the most of the
-structured data format, all commands on the system would need to work
-with it. This would be a major development effort for limited
-benefit. Nonetheless, using Bash after completing the project has
-occasionally resulted in scenarios where I felt I could really benefit
-from Oosh's higher level data manipulation.
+As a standalone shell Oosh is not yet capable of replacing other
+popular shells but as a proof of concept I believe it clearly displays
+the potential of the Oosh design decisions.
 
 \section{Potential Future Enhancements}
 Throughout the project I found many features in common shells that are
@@ -1566,7 +1550,7 @@ benefit from using a data format for which many tools exists, such as
 XML or JSON (the format used currently is very nearly valid JSON).
 
 Other missing luxuries include line continuations, regular
-expressions, subshells (`backticks' in Bash) and tab completion. Tab
+expressions, subshells (`backticks' in {\tt sh}) and tab completion. Tab
 completion in Oosh could be substantially more powerful than that of
 Bash, since commands can know column names.
 
@@ -1589,33 +1573,33 @@ workloads may well benefit from some careful optimisation.
 \bibitem{multics}
   Louis Pouzin
   \emph{Multics: The Origin of the Shell}
-  http://www.multicians.org/shell.html
+  \url{http://www.multicians.org/shell.html}
 
 \bibitem{bourne}
   Tom Duff
   \emph{Rc -- A Shell for Plan 9 and UNIX systems}
-  http://doc.cat-v.org/plan\_9/4th\_edition/papers/rc
+  \url{http://doc.cat-v.org/plan\_9/4th\_edition/papers/rc}
 
 \bibitem{fishdesign}
   Axel Liljencrantz
   \emph{Design Document}
-  http://fishshell.org/user\_doc/design.html
+  \url{http://fishshell.org/user\_doc/design.html}
 
 \bibitem{busybox}
   Denys Vlasenko
   \emph{BusyBox: The Swiss Army Knife of Embedded Linux}
-  http://www.busybox.net/about.html
+  \url{http://www.busybox.net/about.html}
 
 \bibitem{clifu}
   David Winterbottom
   \emph{commandlinefu.com is the place record those command-line gems that
   you return to again and again}
-  http://www.commandlinefu.com
+  \url{http://www.commandlinefu.com}
 
 \bibitem{bashman}
   Free Software Foundation
   \emph{GNU bash manual}
-  http://www.gnu.org/software/bash/manual/
+  \url{http://www.gnu.org/software/bash/manual/}
 
 \bibitem{hci}
   S.\ K.\ Card, T.\ P.\ Moran and A.\ Newell. 
@@ -1645,6 +1629,6 @@ workloads may well benefit from some careful optimisation.
 % use same formatting as proposal had in header
 \parindent 0pt
 \parskip 6pt
-%\include{proposal_include}
+\include{proposal_include}
 
 \end{document}
