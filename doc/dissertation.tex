@@ -5,8 +5,6 @@
 \usepackage{verbatim}
 \usepackage{fancyvrb}
 
-%\usepackage{pxfonts}
-
 % for pretty printing grammar in BNF
 \usepackage{bnf}
 \usepackage{color}
@@ -412,17 +410,15 @@ starting afresh was my best option.
 I chose a workflow that emulated programmers whose work I admire. I
 chose to write my shell in Python, a modern scripting language, used
 Emacs as my editor and used Git, a distributed version control system
-to track changes. For the same reason I chose to host my code on GitHub,
-which had the additional benefit of acting as an off-site
-backup. Later on I needed a parser and lexer so chose Python
-implementations of Lex and Yacc as these are also well respected tools.
+to track changes. Later on I needed a parser and lexer so chose Python
+implementations of Lex and Yacc as these are also well respected
+tools.
 
 My initial specification was very broad, which enabled me to use a
-fairly exploratory style of coding. I used a spiral model approach to
-develop the code, with an additional code stabilisation period at the
-end. Furthermore, my grammar specification (as shown in section
-\ref{grammar}) was developed iteratively after researching the syntax
-used in Bash and Fish.
+fairly exploratory style of coding. My final grammar is in section
+\ref{grammar} and was developed iteratively after researching the
+syntax used in Bash and Fish. This grammar was created to provide a
+useful subset of Fish functionality and be syntactically similar.
 
 Ultimately a mainstream shell is a very large body of code (for
 example, Bash 4.1 contains over 140,000 lines of C
@@ -435,15 +431,98 @@ my design.
   on the source code of Bash 4.1.}
 \stepcounter{footnote}
 
+\section{Software Engineering}
+
+\subsection{Revision Control}
+
+Since my project was going to a medium sized piece of code developed
+over a number of weeks it was clear I needed to use a version control
+system. I chose to use Git, an industry standard distributed version
+control system used by major software projects such as the Linux
+kernel and GNOME.
+
+Rather than running a Git server myself I used GitHub, a Git hosting
+service that is free for open source projects. In order to qualify for
+this I needed to pick an appropriate open source license to release
+Oosh under. I selected the GNU General Public License version 3
+\cite{gpl} (GPL) which is a strong copyleft license so Oosh code may
+only be used in other GPL licensed software.
+
+The benefits of using Git were so striking that I decided to also
+place the dissertation \TeX \ source in the repository, which I put
+under the Creative Commons Attribution license \cite{cc-by}
+(CC-BY). CC-BY is a weaker copyleft license that permits reuse of the
+material in any form provided that the author is attributed.
+
+GitHub also provides a web-based front end to the Git repository which
+is publically viewable. This enabled anyone who was interested in
+either the code or the write-up could view the very latest version and
+monitor progress. This resulted in a wide number of people viewing the
+project, including my supervisor, my director of studies, interested
+students and prospective employers.
+
+\subsection{Backup Policy}
+
+Using a remote Git server gave me an off-site automated backup system
+for no additional effort or expenditure. This proved extremely useful
+when I had a major hardware failure in the later stages of the
+project.
+
+\subsection{Development Model}
+
+I used the spiral development methodology for producing the Oosh
+codebase. The features I implemented tended to be sufficiently
+independent that I was able to write and test each one without being
+forced to change many other parts of the code. In addition to this I
+had a final stabilisation stage to fix any bugs that emerged
+later. These final bug fixes were a result of problems only
+encountered during benchmarking with larger data sets or unusual
+feature interactions.
+
+For the dissertation itself I used an approach inspired by agile
+programming methodology. I used timeboxing to ensure the writing was
+produced at a steady rate.
+
+\subsection{Reaching Milestones}
+
+Milestones were clearly laid out in my project proposal so tracking
+project progress was simple. The coding portion of the project took
+all the time allotted and also consumed all the slack time. This was
+largely due to unanticipated dependencies between features,
+particularly the interpreter itself. 
+
+Before I implemented the interpreter I needed something to interact
+with so I used a simplified prototype. However when I came to replace
+it with a proper parser and evaluator I used third party tools and so
+a number of internal interfaces were unsuitable. In the end it became
+necessary to write the interpreter before the networking features,
+contrary to my original plan. The interpreter was such a core feature
+that all other features were much easier to write once the interpreter
+was in place. I would not have been able to have written the
+interpreter any earlier as the initial stages were crucial to
+developing my ideas about what syntax to implement.
+
+When I was half way through the coding phase it became clear that I
+wasn't reaching my milestones at the times I had hoped to. This was
+solved by using up the slack time and cutting back on the plan to
+write an extensive test harness for Oosh.
+
+My plan also did not anticipate bugs discovered whilst I wrote the
+dissertation. Fortunately I had sufficient time set aside for writing
+that I was also able to fix these bugs as necessary.
+
 \section{Summary}
 
 The feature set I decided to implement was as follows:
 
 \begin{itemize}
-\item A shell interface, which consists of a read-evaluate-print loop
-  (REPL) and a history facility.
-\item A formally specified language that the shell work with accept along
-  with a lexer and parser that accepted this language.
+\item A read-evaluate-print loop (REPL), the fundamental component of
+  a shell interface.
+\item A history facility that enables users to re-run earlier commands
+  without typing them in again.
+\item A language specified in Backus-Naur form that the shell would
+  accept.
+\item A lexer and parser that accepted this language.
 \item An evaluator that implemented the semantics of my language.
 \item A data format specification that was text based, line-oriented
   and allowed inline metadata.
@@ -1695,7 +1774,7 @@ workloads may well benefit from some careful optimisation.
 % the bibliography
 
 \addcontentsline{toc}{chapter}{Bibliography}
-\begin{thebibliography}{9} % at most 9 citations
+\begin{thebibliography}{11} % at most 11 citations
 
 \bibitem{multics}
   Louis Pouzin
@@ -1711,6 +1790,16 @@ workloads may well benefit from some careful optimisation.
   Axel Liljencrantz
   \emph{Design Document}
   \url{http://fishshell.org/user\_doc/design.html}
+
+\bibitem{gpl}
+  Free Software Foundation
+  \emph{The GNU General Public License}
+  \url{http://www.gnu.org/licenses/gpl.html}
+
+\bibitem{cc-by}
+  Creative Commons
+  \emph{Creative Commons Attribution 3.0 Unported License}
+  \url{http://creativecommons.org/licenses/by/3.0/}
 
 \bibitem{busybox}
   Denys Vlasenko
